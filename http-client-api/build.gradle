@@ -1,7 +1,6 @@
-// TODO Inherit group from parent
-group "au.com.redcrew"
-version "0.1-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+plugins {
+    id "apisdkcreator.configuration"
+    id "org.jetbrains.kotlin.jvm"
 }
+
+version "0.1-SNAPSHOT"
