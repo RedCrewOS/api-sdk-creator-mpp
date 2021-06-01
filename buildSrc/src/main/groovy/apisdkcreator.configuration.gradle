@@ -1,5 +1,6 @@
 plugins {
     id "org.jetbrains.kotlin.jvm"
+    id "maven-publish"
 }
 
 // we publish submodules in this group.
@@ -23,4 +24,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
 }
