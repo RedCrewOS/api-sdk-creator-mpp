@@ -2,6 +2,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm"
 }
 
+// we publish submodules in this group.
 group "au.com.redcrew.apisdkcreator"
 
 dependencies {
