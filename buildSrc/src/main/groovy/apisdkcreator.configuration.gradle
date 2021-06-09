@@ -20,6 +20,9 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
 
     testImplementation "com.natpryce:hamkrest:1.8.0.1"
+
+    // TODO: Align with kotlinx-coroutines used by arrow-fx-coroutines
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2"
 }
 
 test {
