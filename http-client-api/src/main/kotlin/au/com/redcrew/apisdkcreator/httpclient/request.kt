@@ -1,5 +1,8 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
+import arrow.core.Either
+import arrow.core.computations.either
+
 /**
  * Defines the various HTTP request methods (verbs)
  */
@@ -45,3 +48,47 @@ data class HttpRequest<T : Any>(
         headers: HttpHeaders
     ) : this(method, url, headers, null, null, null)
 }
+
+/**
+ * Factory to create request headers.
+ *
+ * Creating some headers (eg: Authorization) may require async work to be done (ie: fetching an access token).
+ *
+ * @param headers To be used if one header value depends on another.
+ * @returns A new set of headers.
+ */
+typealias RequestHeaderFactory = suspend (headers: HttpHeaders) -> Either<Exception, HttpHeaders>
+
+/**
+ * Factory definition to create a set of HTTP headers.
+ *
+ * Creating some headers (eg: Authorization) may require async work to be done (ie: fetching an access token).
+ *
+ * @typedef {function} RequestHeadersFactory
+ * @returns A new set of headers.
+ */
+typealias RequestHeadersFactory = suspend () -> Either<Exception, HttpHeaders>
+
+/**
+ * Creates a {@link HttpRequestPolicy} to add headers to a request
+ */
+// addHeaders :: RequestHeadersFactory -> HttpRequestPolicy
+val addHeaders: suspend (RequestHeadersFactory) -> HttpRequestPolicy = { factory -> { request ->
+    either {
+        val headers: HttpHeaders = factory().bind()
+
+        request.copy(headers = request.headers + headers)
+    }
+} }
+
+@Suppress("ThrowableNotThrown")
+val resolveUrl: suspend (String) -> HttpRequestPolicy = { base -> { request ->
+    either {
+        val url = when(request.url) {
+            is HttpRequestUrl.String -> Either.Right("${base}${request.url.url}")
+            else -> Either.Left(IllegalArgumentException("Can't resolve a URL"))
+        }.bind()
+
+        request.copy(url = HttpRequestUrl.String(url))
+    }
+}}
