@@ -38,10 +38,10 @@ typealias HttpClient<Request> = suspend (request: HttpRequest<Request>) -> Eithe
  *
  * TODO: Consider replacing with a State monad.
  */
-interface HttpResult<Request : Any, Response : Any> {
-    val request: HttpRequest<Request>
+data class HttpResult<Request : Any, Response : Any>(
+    val request: HttpRequest<Request>,
     val response: HttpResponse<Response>
-}
+)
 
 /**
  * Manipulates the HttpRequest to conform to specific requirements of the endpoint

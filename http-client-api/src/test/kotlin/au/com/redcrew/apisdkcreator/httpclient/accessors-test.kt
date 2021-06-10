@@ -52,12 +52,9 @@ class AccessorsTest {
     }
 
     private fun givenHttpResult(body: Any): HttpResult<Any, Any> {
-        return object : HttpResult<Any, Any> {
-            override val request: HttpRequest<Any>
-                get() = aHttpRequest<Any>().build()
-
-            override val response: HttpResponse<Any>
-                get() = aHttpResponse<Any>().withBody(body).build()
-        }
+        return HttpResult(
+            aHttpRequest<Any>().build(),
+            aHttpResponse<Any>().withBody(body).build()
+        )
     }
 }
