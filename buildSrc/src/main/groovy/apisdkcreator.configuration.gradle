@@ -7,13 +7,7 @@ plugins {
 group "au.com.redcrew.apisdkcreator"
 
 dependencies {
-    // TODO: Should this be `api`?
-    implementation platform("io.arrow-kt:arrow-stack:0.13.2")
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-
-    implementation "io.arrow-kt:arrow-core"
-    implementation "io.arrow-kt:arrow-fx-coroutines"
 
     testImplementation "org.jetbrains.kotlin:kotlin-test"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
