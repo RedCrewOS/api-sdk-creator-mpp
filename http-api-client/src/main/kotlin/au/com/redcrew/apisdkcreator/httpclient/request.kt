@@ -47,6 +47,11 @@ data class HttpRequest<T : Any>(
         url: HttpRequestUrl,
         headers: HttpHeaders
     ) : this(method, url, headers, null, null, null)
+
+    constructor(
+        method: HttpRequestMethod,
+        url: HttpRequestUrl
+    ) : this(method, url, emptyMap(), null, null, null)
 }
 
 /**
