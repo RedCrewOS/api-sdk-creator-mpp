@@ -51,7 +51,7 @@ data class HttpResult<Request : Any, Response : Any>(
  * @param {HttpRequest} request
  * @returns An updated {@link HttpRequest}
  */
-typealias HttpRequestPolicy = suspend (request: HttpRequest<*>) -> Either<Exception, HttpRequest<*>>
+typealias HttpRequestPolicy<Request> = suspend (request: HttpRequest<Request>) -> Either<Exception, HttpRequest<Request>>
 
 /**
  * Examines and handles the result of calling an endpoint.
@@ -69,4 +69,4 @@ typealias HttpResultHandler<Request, Response> = suspend (result: HttpResult<Req
  * @param {HttpResponse} response
  * @returns {Async} The updated {@link HttpResponse}
  */
-typealias HttpResponseHandler<T> = suspend (response: HttpResponse<T>) -> Either<Exception, HttpResponse<T>>
+typealias HttpResponseHandler<Response> = suspend (response: HttpResponse<Response>) -> Either<Exception, HttpResponse<Response>>
