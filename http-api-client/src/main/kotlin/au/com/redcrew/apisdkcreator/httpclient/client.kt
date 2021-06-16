@@ -28,7 +28,7 @@ typealias HttpApiClient<Request, Response> = suspend (request: HttpRequest<Reque
  *
  * Errors should only be used to indicate unrecoverable problems like a network being unavailable.
  */
-typealias HttpClient<Request> = suspend (request: HttpRequest<Request>) -> Either<Exception, HttpResponse<UnstructuredData>>
+typealias HttpClient = suspend (request: HttpRequest<UnstructuredData>) -> Either<Exception, HttpResponse<UnstructuredData>>
 
 /**
  * The result of sending an {@link HttpRequest} to an endpoint.
