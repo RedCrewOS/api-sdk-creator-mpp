@@ -5,6 +5,11 @@ import arrow.core.computations.either
 
 typealias HttpHeaders = Map<String, String>
 
+// concatHeaders :: RequestHeaderFactory -> HttpHeaders -> Either HttpHeaders
+private val concatHeaders: suspend (RequestHeaderFactory) -> suspend (HttpHeaders) -> Either<Exception, HttpHeaders> =
+    { factory -> { headers -> factory(headers).map { headers + it } }
+}
+
 // toBearerToken :: String -> String
 private val toBearerToken: (String) -> String = { token -> "Bearer $token" }
 
@@ -17,13 +22,11 @@ private val toAuthorisationHeader: (String) -> HttpHeaders = { value -> mapOf("a
 // createHeaders :: List RequestHeaderFactory -> RequestHeadersFactory
 val createHeaders: suspend (List<RequestHeaderFactory>) -> RequestHeadersFactory = { factories: List<RequestHeaderFactory> ->
     {
-        factories.fold(Either.Right(emptyMap())) { headers: Either<Exception, HttpHeaders>, factory: RequestHeaderFactory ->
-            either {
-                val existingHeaders = headers.bind()
-                val newHeaders = factory(existingHeaders).bind()
-
-                existingHeaders + newHeaders
-            }
+        factories.fold(Either.Right(emptyMap())) {
+            headers: Either<Exception, HttpHeaders>, factory: RequestHeaderFactory ->
+                either {
+                    concatHeaders(factory)(headers.bind()).bind()
+                }
         }
     }
 }
@@ -34,7 +37,7 @@ val createHeaders: suspend (List<RequestHeaderFactory>) -> RequestHeadersFactory
 // bearerToken :: (() -> Either Exception String) -> RequestHeaderFactory
 val bearerToken: suspend (suspend () -> Either<Exception, String>) -> RequestHeaderFactory = { tokenFactory ->
     { _ ->
-        either<Exception, HttpHeaders> {
+        either {
             toAuthorisationHeader(toBearerToken(tokenFactory().bind()))
         }
     }
