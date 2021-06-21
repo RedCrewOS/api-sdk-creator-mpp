@@ -1,6 +1,6 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
-data class HttpResponse<T : Any>(
+data class HttpResponse<T>(
     val statusCode: Int,
     val statusMessage: String,
 

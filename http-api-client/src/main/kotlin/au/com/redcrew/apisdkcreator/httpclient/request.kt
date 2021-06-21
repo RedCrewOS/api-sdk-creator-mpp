@@ -30,7 +30,7 @@ sealed class HttpRequestUrl {
  * Adapters will have to map properties to the request object structure used by the underlying
  * HTTP client library.
  */
-data class HttpRequest<T : Any>(
+data class HttpRequest<T>(
     val method: HttpRequestMethod,
     val url: HttpRequestUrl,
     val headers: HttpHeaders,

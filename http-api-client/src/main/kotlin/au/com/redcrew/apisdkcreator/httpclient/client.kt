@@ -11,10 +11,12 @@ import arrow.core.Either
  *
  * It knows how to handle HTTP errors (even if that means returning them).
  *
+ * @template A
+ * @template B
  * @param {HttpRequest} request
  * @returns Either the {@link HttpResponse} or the error.
  */
-typealias HttpApiClient<Request, Response> = suspend (request: HttpRequest<Request>) -> Either<Exception, HttpResponse<Response>>
+typealias HttpApiClient<A, B> = suspend (request: HttpRequest<A>) -> Either<Exception, HttpResponse<B>>
 
 /**
  * A HttpClient deals strictly with {@link UnstructuredData} types. To use a HttpClient with
@@ -38,9 +40,9 @@ typealias HttpClient = suspend (request: HttpRequest<UnstructuredData>) -> Eithe
  *
  * TODO: Consider replacing with a State monad.
  */
-data class HttpResult<Request : Any, Response : Any>(
-    val request: HttpRequest<Request>,
-    val response: HttpResponse<Response>
+data class HttpResult<A, B>(
+    val request: HttpRequest<A>,
+    val response: HttpResponse<B>
 )
 
 /**
@@ -50,27 +52,31 @@ data class HttpResult<Request : Any, Response : Any>(
  *
  * Because a policy may change the body, we need two types.
  *
+ * @template A
+ * @template B
  * @param {HttpRequest} request
  * @returns An updated {@link HttpRequest}
  */
-typealias HttpRequestPolicy<T, R> = suspend (request: HttpRequest<T>) -> Either<Exception, HttpRequest<R>>
+typealias HttpRequestPolicy<A, B> = suspend (request: HttpRequest<A>) -> Either<Exception, HttpRequest<B>>
 
 /**
  * Examines and handles the result of calling an endpoint.
  *
  * Because a handler may change the body, we need two types.
  *
- * @typedef {function} HttpResultHandler
+ * @template A
+ * @template B
+ * @template C
  * @param {HttpResult} result
  * @returns The updated {@link HttpResult}
  */
-typealias HttpResultHandler<Request, T, R> = suspend (result: HttpResult<Request, T>) -> Either<Exception, HttpResult<Request, R>>
+typealias HttpResultHandler<A, B, C> = suspend (result: HttpResult<A, B>) -> Either<Exception, HttpResult<A, C>>
 
 /**
  * Handles a {@link HttpResponse}
  *
- * @typedef {function} HttpResponseHandler
+ * @template A
  * @param {HttpResponse} response
  * @returns {Async} The updated {@link HttpResponse}
  */
-typealias HttpResponseHandler<Response> = suspend (response: HttpResponse<Response>) -> Either<Exception, HttpResponse<Response>>
+typealias HttpResponseHandler<A> = suspend (response: HttpResponse<A>) -> Either<Exception, HttpResponse<A>>
