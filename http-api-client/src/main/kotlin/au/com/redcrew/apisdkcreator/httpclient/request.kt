@@ -78,7 +78,7 @@ typealias RequestHeadersFactory = suspend () -> Either<Exception, HttpHeaders>
  * Creates a {@link HttpRequestPolicy} to add headers to a request
  */
 // addHeaders :: RequestHeadersFactory -> HttpRequestPolicy
-val addHeaders: suspend (RequestHeadersFactory) -> HttpRequestPolicy<*> = { factory -> { request ->
+val addHeaders: suspend (RequestHeadersFactory) -> HttpRequestPolicy<*, *> = { factory -> { request ->
     either {
         val headers: HttpHeaders = factory().bind()
 
@@ -87,7 +87,7 @@ val addHeaders: suspend (RequestHeadersFactory) -> HttpRequestPolicy<*> = { fact
 } }
 
 @Suppress("ThrowableNotThrown")
-val resolveUrl: suspend (String) -> HttpRequestPolicy<*> = { base -> { request ->
+val resolveUrl: suspend (String) -> HttpRequestPolicy<*, *> = { base -> { request ->
     either {
         val url = when(request.url) {
             is HttpRequestUrl.String -> Either.Right("${base}${request.url.url}")

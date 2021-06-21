@@ -46,21 +46,25 @@ data class HttpResult<Request : Any, Response : Any>(
 /**
  * Manipulates the HttpRequest to conform to specific requirements of the endpoint
  *
- * eg: Adding an access token
+ * For example, adding an access token
+ *
+ * Because a policy may change the body, we need two types.
  *
  * @param {HttpRequest} request
  * @returns An updated {@link HttpRequest}
  */
-typealias HttpRequestPolicy<Request> = suspend (request: HttpRequest<Request>) -> Either<Exception, HttpRequest<Request>>
+typealias HttpRequestPolicy<T, R> = suspend (request: HttpRequest<T>) -> Either<Exception, HttpRequest<R>>
 
 /**
  * Examines and handles the result of calling an endpoint.
+ *
+ * Because a handler may change the body, we need two types.
  *
  * @typedef {function} HttpResultHandler
  * @param {HttpResult} result
  * @returns The updated {@link HttpResult}
  */
-typealias HttpResultHandler<Request, Response> = suspend (result: HttpResult<Request, Response>) -> Either<Exception, HttpResult<Request, Response>>
+typealias HttpResultHandler<Request, T, R> = suspend (result: HttpResult<Request, T>) -> Either<Exception, HttpResult<Request, R>>
 
 /**
  * Handles a {@link HttpResponse}
