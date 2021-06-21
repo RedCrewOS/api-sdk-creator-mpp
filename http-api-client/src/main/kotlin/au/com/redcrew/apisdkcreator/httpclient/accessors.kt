@@ -9,7 +9,7 @@ import arrow.core.*
  * @return {HttpResponse} A response
  */
 // getHttpResponse :: HttpResult -> HttpResponse
-val getHttpResponse = { result: HttpResult<Any, Any> -> result.response }
+val getHttpResponse: (HttpResult<*, *>) -> HttpResponse<*> = { result -> result.response }
 
 /**
  * Helper to get the body out of a {@link HttpResponse}
@@ -18,7 +18,7 @@ val getHttpResponse = { result: HttpResult<Any, Any> -> result.response }
  * @return {any} The body. Maybe undefined
  */
 // getHttpBody :: HttpResponse -> a
-val getHttpBody = { response: HttpResponse<Any> -> response.body }
+val getHttpBody: (HttpResponse<*>) -> Any? = { response -> response.body }
 
 // extractHttpBody :: HttpResult -> a
 val extractHttpBody = getHttpBody compose getHttpResponse
