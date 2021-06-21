@@ -1,6 +1,7 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.*
+import java.lang.Exception
 
 /**
  * Helper to get the response in a {@link HttpResult}
@@ -9,7 +10,7 @@ import arrow.core.*
  * @return {HttpResponse} A response
  */
 // getHttpResponse :: HttpResult -> HttpResponse
-val getHttpResponse: (HttpResult<*, *>) -> HttpResponse<*> = { result -> result.response }
+fun <T> getHttpResponse(result: HttpResult<*, T>): HttpResponse<T> = result.response
 
 /**
  * Helper to get the body out of a {@link HttpResponse}
@@ -18,13 +19,13 @@ val getHttpResponse: (HttpResult<*, *>) -> HttpResponse<*> = { result -> result.
  * @return {any} The body. Maybe undefined
  */
 // getHttpBody :: HttpResponse -> a
-val getHttpBody: (HttpResponse<*>) -> Any? = { response -> response.body }
+fun <T> getHttpBody(response: HttpResponse<T>): T? = response.body
 
 // extractHttpBody :: HttpResult -> a
-val extractHttpBody = getHttpBody compose getHttpResponse
+fun <T> extractHttpBody(result: HttpResult<*, T>): T? = getHttpBody(getHttpResponse(result))
 
 // parseIntValue :: a -> Either Exception Integer
-val parseIntValue = { a: String -> Either.catch { Integer.parseInt(a) } }
+fun parseIntValue(a: String): Either<Exception, Int> = Either.catch({ t -> t as Exception }, { Integer.parseInt(a) })
 
 /**
  * Tries to take a header value and parse it to an int.
@@ -36,8 +37,7 @@ val parseIntValue = { a: String -> Either.catch { Integer.parseInt(a) } }
  * missing.
  */
 // parseIntHeader :: (String, HttpHeaders) -> Either Exception Option Integer
-val parseIntHeader = { header: String, headers: HttpHeaders ->
+fun parseIntHeader(header: String, headers: HttpHeaders): Either<Exception, Option<Int>> =
     Option.fromNullable(headers[header])
-        .map(parseIntValue)
+        .map(::parseIntValue)
         .sequenceEither()
-}

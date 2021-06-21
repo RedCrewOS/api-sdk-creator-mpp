@@ -2,25 +2,26 @@ package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.right
 
 typealias HttpHeaders = Map<String, String>
 
 // concatHeaders :: RequestHeaderFactory -> HttpHeaders -> Either HttpHeaders
-private val concatHeaders: suspend (RequestHeaderFactory) -> suspend (HttpHeaders) -> Either<Exception, HttpHeaders> =
-    { factory -> { headers -> factory(headers).map { headers + it } }
+private suspend fun concatHeaders(factory: RequestHeaderFactory): suspend (HttpHeaders) -> Either<Exception, HttpHeaders> =
+    { headers -> factory(headers).map { headers + it }
 }
 
 // toBearerToken :: String -> String
-private val toBearerToken: (String) -> String = { token -> "Bearer $token" }
+private fun toBearerToken(token: String): String = "Bearer $token"
 
 // toAuthorisationHeader :: String -> HttpHeaders
-private val toAuthorisationHeader: (String) -> HttpHeaders = { value -> mapOf("authorization" to value) }
+private fun toAuthorisationHeader(value: String): HttpHeaders = mapOf("authorization" to value)
 
 /**
  * Creates a {@link RequestHeadersFactory} using {@link RequestHeaderFactory}s
  */
 // createHeaders :: List RequestHeaderFactory -> RequestHeadersFactory
-val createHeaders: suspend (List<RequestHeaderFactory>) -> RequestHeadersFactory = { factories: List<RequestHeaderFactory> ->
+suspend fun createHeaders(factories: List<RequestHeaderFactory>): RequestHeadersFactory =
     {
         factories.fold(Either.Right(emptyMap())) {
             headers: Either<Exception, HttpHeaders>, factory: RequestHeaderFactory ->
@@ -29,22 +30,20 @@ val createHeaders: suspend (List<RequestHeaderFactory>) -> RequestHeadersFactory
                 }
         }
     }
-}
 
 /**
  * Adds a bearer token to request headers
  */
 // bearerToken :: (() -> Either Exception String) -> RequestHeaderFactory
-val bearerToken: suspend (suspend () -> Either<Exception, String>) -> RequestHeaderFactory = { tokenFactory ->
+suspend fun bearerToken(tokenFactory: suspend () -> Either<Exception, String>): RequestHeaderFactory =
     { _ ->
         either {
             toAuthorisationHeader(toBearerToken(tokenFactory().bind()))
         }
     }
-}
 
 /**
  * Adds the given header to a {@link HttpRequest}
  */
 // constantHeaders :: HttpHeaders -> RequestHeaderFactory
-val constantHeaders: suspend (HttpHeaders) -> RequestHeaderFactory = { headers -> { Either.Right(headers) } }
+fun constantHeaders(headers: HttpHeaders): RequestHeaderFactory = { headers.right() }

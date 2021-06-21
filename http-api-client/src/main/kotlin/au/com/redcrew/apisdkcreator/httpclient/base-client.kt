@@ -3,7 +3,7 @@ package au.com.redcrew.apisdkcreator.httpclient
 import java.lang.IllegalArgumentException
 import java.net.URLEncoder
 
-val replacePathParams = { path: String, params: Map<String, String> ->
+fun replacePathParams(path: String, params: Map<String, String>): String =
     path.split("/")
         .map { segment ->
             if (segment.startsWith(":")) {
@@ -15,14 +15,12 @@ val replacePathParams = { path: String, params: Map<String, String> ->
             return@map segment
         }
         .joinToString("/")
-}
 
-val createQueryString = { params: Map<String, String> ->
+fun createQueryString(params: Map<String, String>): String =
     when {
-        params.isNotEmpty() -> "?${params.map(mapEntryToPair).joinToString("&")}"
+        params.isNotEmpty() -> "?${params.map(::mapEntryToPair).joinToString("&")}"
         else -> ""
     }
-}
 
-private val mapEntryToPair: (Map.Entry<String, String>) -> String =
-    { entry -> "${entry.key}=${URLEncoder.encode(entry.value, "utf-8")}" }
+private fun mapEntryToPair(entry: Map.Entry<String, String>): String =
+    "${entry.key}=${URLEncoder.encode(entry.value, "utf-8")}"
