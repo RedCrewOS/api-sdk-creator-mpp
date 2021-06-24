@@ -75,8 +75,11 @@ typealias HttpResultHandler<A, B, C> = suspend (result: HttpResult<A, B>) -> Eit
 /**
  * Handles a {@link HttpResponse}
  *
+ * Because a handler may change the body, we need two types.
+ *
  * @template A
+ * @template B
  * @param {HttpResponse} response
  * @returns {Async} The updated {@link HttpResponse}
  */
-typealias HttpResponseHandler<A> = suspend (response: HttpResponse<A>) -> Either<Exception, HttpResponse<A>>
+typealias HttpResponseHandler<A, B> = suspend (response: HttpResponse<A>) -> Either<Exception, HttpResponse<B>>
