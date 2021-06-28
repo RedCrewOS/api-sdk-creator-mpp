@@ -52,6 +52,21 @@ data class HttpRequest<T>(
         method: HttpRequestMethod,
         url: HttpRequestUrl
     ) : this(method, url, emptyMap(), null, null, null)
+
+    /**
+     * When using the default `copy` the type of the body can't be changed.
+     *
+     * This method allows a copy where the type of the body can be changed.
+     */
+    fun <A> copyWithBody(
+        method: HttpRequestMethod = this.method,
+        url: HttpRequestUrl = this.url,
+        headers: HttpHeaders = this.headers,
+        pathParams: Map<String, String>? = this.pathParams,
+        queryParams: Map<String, String>? = this.queryParams,
+        body: A?
+    ): HttpRequest<A> =
+        HttpRequest(method, url, headers, pathParams, queryParams, body)
 }
 
 /**
