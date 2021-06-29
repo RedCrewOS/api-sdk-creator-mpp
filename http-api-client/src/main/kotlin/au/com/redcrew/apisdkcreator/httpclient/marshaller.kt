@@ -3,6 +3,7 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.core.computations.option
+import kotlin.reflect.KClass
 
 typealias Marshaller = suspend (Any) -> Either<Exception, UnstructuredData>
 typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<Exception, T>
@@ -119,3 +120,30 @@ fun <T> unmarshaller(vararg unmarshallers: HttpResponseHandler<UnstructuredData,
                 )
             }
     }
+
+/**
+ * Because Kotlin does not allow anonymous functions/lambdas to have generic type parameters, we are unable to write
+ * curried functions where the generic type does not appear as part of the overall function signature.
+ *
+ * For example the following code does not compile.
+ *
+ * ```
+ * fun gsonUnmarshaller(gson: Gson): (KClass<T>) -> Unmarshaller<T>
+ * ```
+ *
+ * The only to make it compile is to add <T> to the named function, in this case `gsonUnmarshaller`. This however
+ * would bind the resulting functions to one type which doesn't allow for reuse. We'd want to pass an initial Gson
+ * configuration at the start of the pipeline, and have SDK specific functions add steps to the pipeline when the
+ * result type of the SDK operation is known, while not having to perform any casts and maintain type safety.
+ *
+ * The solution is to take advantage of Kotlin's operator overloading to provide a object that knows what to do when
+ * invoked. This delays the binding of the generic type until the function is invoked rather than when the lambda
+ * signature is defined.
+ *
+ * It adds an extra layer of indirection for implementation readers but results in nice type safe code in the caller.
+ *
+ * @see https://kotlinlang.org/docs/operator-overloading.html#invoke-operator
+ */
+interface GenericTypeUnmarshaller {
+    operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
+}
