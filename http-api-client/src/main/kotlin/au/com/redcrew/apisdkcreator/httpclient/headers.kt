@@ -21,7 +21,7 @@ private fun toAuthorisationHeader(value: String): HttpHeaders = mapOf("authoriza
  * Creates a {@link RequestHeadersFactory} using {@link RequestHeaderFactory}s
  */
 // createHeaders :: List RequestHeaderFactory -> RequestHeadersFactory
-suspend fun createHeaders(factories: List<RequestHeaderFactory>): RequestHeadersFactory =
+suspend fun createHeaders(vararg factories: RequestHeaderFactory): RequestHeadersFactory =
     {
         factories.fold(Either.Right(emptyMap())) {
             headers: Either<Exception, HttpHeaders>, factory: RequestHeaderFactory ->

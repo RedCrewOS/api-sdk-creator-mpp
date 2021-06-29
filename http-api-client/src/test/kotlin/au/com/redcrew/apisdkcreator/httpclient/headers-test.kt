@@ -26,7 +26,7 @@ class HeadersTest(val dispatcher: TestCoroutineDispatcher) {
 
         @Test
         fun `should create request headers from List`() = dispatcher.runBlockingTest{
-            val factory: RequestHeadersFactory = createHeaders(listOf(factoryOne, factoryTwo))
+            val factory: RequestHeadersFactory = createHeaders(factoryOne, factoryTwo)
             val headers: HttpHeaders = factory().fold(::throwException, ::identity)
 
             assertThat(headers["x-application-name"], equalTo("project"))
