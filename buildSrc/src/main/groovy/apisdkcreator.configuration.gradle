@@ -18,6 +18,7 @@ dependencies {
 
     // TODO: Align with kotlinx-coroutines used by arrow-fx-coroutines
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2"
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect:1.5.10"
 }
 
 test {
