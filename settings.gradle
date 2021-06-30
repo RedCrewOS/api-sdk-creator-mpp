@@ -1,3 +1,5 @@
 rootProject.name = "api-sdk-creator"
+include "test"
+
 include "http-api-client"
 

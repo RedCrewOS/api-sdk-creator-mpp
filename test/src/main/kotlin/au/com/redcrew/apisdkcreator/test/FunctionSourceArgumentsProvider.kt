@@ -1,4 +1,4 @@
-package au.com.redcrew.apisdkcreator.httpclient.test
+package au.com.redcrew.apisdkcreator.test
 
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
@@ -12,7 +12,7 @@ import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.functions
 
-internal class FunctionSourceArgumentsProvider : ArgumentsProvider, AnnotationConsumer<FunctionSource> {
+class FunctionSourceArgumentsProvider : ArgumentsProvider, AnnotationConsumer<FunctionSource> {
     private lateinit var functionName: String
 
     override fun provideArguments(context: ExtensionContext): Stream<Arguments>? {

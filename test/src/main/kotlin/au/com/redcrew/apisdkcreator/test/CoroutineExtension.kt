@@ -1,4 +1,4 @@
-package au.com.redcrew.apisdkcreator.httpclient.test
+package au.com.redcrew.apisdkcreator.test
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineDispatcher

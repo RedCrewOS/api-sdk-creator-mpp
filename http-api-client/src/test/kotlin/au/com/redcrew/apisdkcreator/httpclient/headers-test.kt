@@ -2,8 +2,8 @@ package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.Either
 import arrow.core.identity
-import au.com.redcrew.apisdkcreator.httpclient.test.CoroutineExtension
-import au.com.redcrew.apisdkcreator.httpclient.test.throwException
+import au.com.redcrew.apisdkcreator.test.CoroutineExtension
+import au.com.redcrew.apisdkcreator.test.throwException
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi

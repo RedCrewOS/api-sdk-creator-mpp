@@ -1,6 +1,6 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
-import au.com.redcrew.apisdkcreator.httpclient.test.CoroutineExtension
+import au.com.redcrew.apisdkcreator.test.CoroutineExtension
 import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.Matcher
 import com.natpryce.hamkrest.assertion.assertThat

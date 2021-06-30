@@ -3,8 +3,8 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.Either
 import arrow.core.identity
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
-import au.com.redcrew.apisdkcreator.httpclient.test.CoroutineExtension
-import au.com.redcrew.apisdkcreator.httpclient.test.throwException
+import au.com.redcrew.apisdkcreator.test.CoroutineExtension
+import au.com.redcrew.apisdkcreator.test.throwException
 import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.Matcher
 import com.natpryce.hamkrest.assertion.assertThat
@@ -12,7 +12,6 @@ import com.natpryce.hamkrest.equalTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

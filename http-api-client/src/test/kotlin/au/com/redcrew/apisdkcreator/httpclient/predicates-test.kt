@@ -2,7 +2,7 @@ package au.com.redcrew.apisdkcreator.httpclient
 
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
-import au.com.redcrew.apisdkcreator.httpclient.test.FunctionSource
+import au.com.redcrew.apisdkcreator.test.FunctionSource
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.jupiter.api.DisplayName

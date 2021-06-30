@@ -1,4 +1,4 @@
-package au.com.redcrew.apisdkcreator.httpclient.test
+package au.com.redcrew.apisdkcreator.test
 
 import org.junit.jupiter.params.provider.ArgumentsSource
 
