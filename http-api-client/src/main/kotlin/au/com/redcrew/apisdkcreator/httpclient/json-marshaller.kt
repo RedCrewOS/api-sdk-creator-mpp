@@ -1,5 +1,8 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
+import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
+import kotlin.reflect.KClass
+
 /**
  * Default mime type for JSON.
  */
@@ -17,5 +20,15 @@ fun jsonMarshaller(contentType: String = JSON_MIME_TYPE): (Marshaller) -> HttpRe
  * The returned HttpResultHandler will return an Exception if anything other than the given content type is
  * in the HttpResponse.
  */
-fun <T> jsonUnmarshaller(contentType: String = JSON_MIME_TYPE): (Unmarshaller<T>) -> HttpResultHandler<*, UnstructuredData, T> =
-    { unmarshaller -> unmarshaller(unmarshallerFor<T>(contentType)(unmarshaller)) }
+// jsonUnmarshaller :: (KClass<T> -> Unmarshaller<T>, String) -> KClass<T> -> HttpResultHandler<*, UnstructuredData, T>
+fun jsonUnmarshaller(unmarshallerFactory: GenericTypeUnmarshaller, contentType: String = JSON_MIME_TYPE): GenericJsonResultHandler =
+    object : GenericJsonResultHandler {
+        override fun <T : Any> invoke(p1: KClass<T>): HttpResultHandler<*, UnstructuredData, T> {
+            return unmarshaller(unmarshallerFor(contentType)(unmarshallerFactory(p1)))
+        }
+    }
+
+// GenericJsonResultHandler :: (KClass<T>) -> HttpResultHandler<*, UnstructuredData, T>
+interface GenericJsonResultHandler: GenericTypeCurriedFunction {
+    operator fun <T : Any> invoke(p1: KClass<T>): HttpResultHandler<*, UnstructuredData, T>
+}

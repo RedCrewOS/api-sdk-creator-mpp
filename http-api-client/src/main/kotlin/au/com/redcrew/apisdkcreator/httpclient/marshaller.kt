@@ -3,6 +3,7 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.core.computations.option
+import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
 import kotlin.reflect.KClass
 
 typealias Marshaller = suspend (Any) -> Either<Exception, UnstructuredData>
@@ -73,18 +74,8 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
  * most often in corporate networks, where a misconfigured gateway/endpoint returns a different content type due to it
  * being misconfigured. Often this is HTML, where as an application/SDK might be expecting JSON/XML in the response.
  */
-fun <T> unmarshallerFor(contentType: String): (Unmarshaller<T>) -> HttpResponseHandler<UnstructuredData, T> =
-    { unmarshaller ->
-        { response ->
-            either {
-                val body: T? =
-                    if (hasContentType(contentType, response)) { response.body?.let { unmarshaller(it).bind() } }
-                    else { null }
-
-                response.copyWithBody(body = body)
-            }
-        }
-    }
+// unmarshallerFor :: String -> Unmarshaller<T> -> HttpResponseHandler<UnstructuredData, T>
+fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedResponseUnmarshaller(contentType)
 
 /**
  * An unmarshaller takes a sequence of functions that know how to unmarshall specific content types.
@@ -122,28 +113,33 @@ fun <T> unmarshaller(vararg unmarshallers: HttpResponseHandler<UnstructuredData,
     }
 
 /**
- * Because Kotlin does not allow anonymous functions/lambdas to have generic type parameters, we are unable to write
- * curried functions where the generic type does not appear as part of the overall function signature.
+ * A generic type unmarshaller is a function that, given any KClass, will return an instance of the type defined by
+ * the class.
  *
- * For example the following code does not compile.
- *
- * ```
- * fun gsonUnmarshaller(gson: Gson): (KClass<T>) -> Unmarshaller<T>
- * ```
- *
- * The only to make it compile is to add <T> to the named function, in this case `gsonUnmarshaller`. This however
- * would bind the resulting functions to one type which doesn't allow for reuse. We'd want to pass an initial Gson
- * configuration at the start of the pipeline, and have SDK specific functions add steps to the pipeline when the
- * result type of the SDK operation is known, while not having to perform any casts and maintain type safety.
- *
- * The solution is to take advantage of Kotlin's operator overloading to provide a object that knows what to do when
- * invoked. This delays the binding of the generic type until the function is invoked rather than when the lambda
- * signature is defined.
- *
- * It adds an extra layer of indirection for implementation readers but results in nice type safe code in the caller.
- *
- * @see https://kotlinlang.org/docs/operator-overloading.html#invoke-operator
+ * This will be most often returned/used by functions that wrap JSON libraries like Gson, or Jackson.
  */
-interface GenericTypeUnmarshaller {
+// GenericTypeUnmarshaller :: (KClass<T>) -> Unmarshaller<T>
+interface GenericTypeUnmarshaller: GenericTypeCurriedFunction {
     operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
+}
+
+/**
+ * Used to create a function that, given an Unmarshaller, will return an HttpResponseHandler to unmarshall the
+ * HttpResponse body.
+ */
+// TypedResponseUnmarshaller :: (Unmarshaller<T>) -> HttpResponseHandler<UnstructuredData, T>
+class TypedResponseUnmarshaller(
+    private val contentType: String
+) : GenericTypeCurriedFunction {
+    operator fun <T : Any> invoke(p1: Unmarshaller<T>): HttpResponseHandler<UnstructuredData, T> {
+        return { response ->
+            either {
+                val body: T? =
+                    if (hasContentType(contentType, response)) { response.body?.let { p1(it).bind() } }
+                    else { null }
+
+                response.copyWithBody(body = body)
+            }
+        }
+    }
 }

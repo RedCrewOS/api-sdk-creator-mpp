@@ -142,7 +142,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             unmarshaller: Unmarshaller<TestBody> = this.unmarshaller,
             contentType: String = this@MarshallingTest.contentType
         ): Either<Exception, HttpResponse<TestBody>> =
-            unmarshallerFor<TestBody>(contentType)(unmarshaller)(result)
+            unmarshallerFor(contentType)(unmarshaller)(result)
     }
 
     @Nested

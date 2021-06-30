@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import kotlin.reflect.KClass
 
 @ExperimentalCoroutinesApi
 @ExtendWith(CoroutineExtension::class)
@@ -63,6 +64,8 @@ class JsonMarshallingTest(val dispatcher: TestCoroutineDispatcher) {
     @DisplayName("unmarshaller")
     inner class UnmarshallerTest {
         private val unmarshaller: Unmarshaller<TestBody> = { body.right() }
+        private val factory: GenericTypeUnmarshaller = GenericTypeUnmarshallerWrapper<TestBody> { unmarshaller }
+
         private val result = HttpResult(
             request = aHttpRequest<Any>().build(),
             response = aHttpResponse<UnstructuredData>()
@@ -89,9 +92,18 @@ class JsonMarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         }
 
         private suspend fun unmarshall(contentType: String): Either<Exception, HttpResult<*, TestBody>> =
-            jsonUnmarshaller<TestBody>(contentType)(unmarshaller)(result)
+            jsonUnmarshaller(factory, contentType)(TestBody::class)(result)
 
         private suspend fun unmarshall(): Either<Exception, HttpResult<*, TestBody>> =
-            jsonUnmarshaller<TestBody>()(unmarshaller)(result)
+            jsonUnmarshaller(factory)(TestBody::class)(result)
+    }
+}
+
+class GenericTypeUnmarshallerWrapper<A: Any>(
+    private val delegate: (KClass<A>) -> Unmarshaller<A>
+) : GenericTypeUnmarshaller {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> {
+        return delegate(p1 as KClass<A>) as Unmarshaller<T>
     }
 }
