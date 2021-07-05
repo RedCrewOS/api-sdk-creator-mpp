@@ -1,0 +1,16 @@
+plugins {
+    id "apisdkcreator.configuration"
+}
+
+version "0.1-SNAPSHOT"
+
+dependencies {
+    api project(":http-api-client")
+
+    implementation platform("com.squareup.okhttp3:okhttp-bom:4.9.0")
+    implementation "com.squareup.okhttp3:okhttp"
+
+    testImplementation("com.squareup.okhttp3:mockwebserver")
+    testImplementation project(":test")
+}
+

@@ -3,4 +3,5 @@ include "test"
 
 include "http-api-client"
 include "gson"
+include "ok-http"
 
