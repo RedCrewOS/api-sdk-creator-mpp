@@ -1,0 +1,15 @@
+plugins {
+    id "apisdkcreator.configuration"
+}
+
+version "0.1-SNAPSHOT"
+
+dependencies {
+    implementation project(":http-api-client")
+    implementation project(":ok-http")
+    implementation project(":gson")
+
+    // TODO: Align with kotlinx-coroutines used by arrow-fx-coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
+}
+
