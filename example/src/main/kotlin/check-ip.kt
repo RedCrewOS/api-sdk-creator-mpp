@@ -66,6 +66,10 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
      *
      * The library specific pieces have been abstracted away behind function types allowing for injection of any
      * compatible function and thus any compatible library.
+     *
+     * When the pipeline is run with a request, if any of these functions return a Either.Left(Exception), the overall
+     * result of the pipeline will be an Exception which SDK specific operations will need to pass back to client
+     * applications, or handle internally.
      */
     return defaultHeaders pipeK jsonMarshaller()(marshaller) pipeK client
 }
@@ -91,26 +95,38 @@ suspend fun checkIp(
      * Because the response type (`IpData`) is now known we can configure the JSON Unmarshalling to
      * convert JSON response data into an instance of the type.
      *
-     * The final API pipeline is composed, and invoked by sending the request to the server.
-     *
-     * Finally the response body is extracted from the HttpResult and returned to the SDK caller.
+     * The final pipeline to send a request to the server is now complete
      */
-    return (client pipeK jsonUnmarshaller(IpData::class))(request).map(::extractHttpBody)
+    val pipeline = client pipeK jsonUnmarshaller(IpData::class)
+
+    /*
+     * So let's sent the request to the server
+     */
+     val result = pipeline(request)
+
+     /*
+     * Finally extract the response body from the HttpResult and return it to the SDK caller.
+     *
+     * If the result is an Either.Left, then the map() won't happen. This is the beauty of the Either monad in
+     * action as we don't even have to think about error handling thanks to the polymorphic behaviour of monads.
+     */
+    return result.map(::extractHttpBody)
 }
 
 fun main() {
     /*
-     * Because the functions in `api-sdk-creator` are suspending functions, to use an SDK operation, the need to be
+     * Because the functions in `api-sdk-creator` are suspending functions, to use an SDK operation, they need to be
      * used in a Coroutine Scope.
      *
      * Because we want to wait here until we get the HTTP response from the server, we'll just block the execution
      * of the program.
      *
-     * In a real application (eg: Android) the Coroutine Scope would need to be assigned to a Dispatcher to be executed
-     * on a non UI thread.
+     * In a real application (eg: an Android app) the Coroutine Scope would need to be assigned to a Dispatcher to be
+     * executed on a non UI thread (eg: by using `withContext`)
      *
      * See:
      *  - https://kotlinlang.org/docs/coroutines-basics.html
+     *  - https://developer.android.com/kotlin/coroutines
      */
     val result = runBlocking {
         checkIp(apiClient(okHttpClient()), jsonUnmarshaller(unmarshaller))
