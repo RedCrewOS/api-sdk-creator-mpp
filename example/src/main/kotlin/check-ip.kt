@@ -102,7 +102,10 @@ suspend fun checkIp(
      * Because the response type (`IpData`) is now known we can configure the JSON Unmarshalling to
      * convert JSON response data into an instance of the type.
      *
-     * The final pipeline to send a request to the server is now complete
+     * The final pipeline to send a request to the server is now complete.
+     *
+     * SDK developers should use partial application or closures to do this once and have the
+     * pipeline available to all SDK operation invocations.
      */
     val pipeline = client pipeK jsonUnmarshaller(IpData::class)
 
@@ -150,6 +153,9 @@ fun main() {
      * To get at the wrapped value we have to "unwrap the box" or "fold out the value".
      *
      * In this case we throw the error if we have one, or print the IpData.
+     *
+     * In a real application we could transform the error/data and update a UI model (eg: LiveData) to show the
+     * result to the user in an appropriate way.
      */
     result.fold(
         { e -> throw e },
