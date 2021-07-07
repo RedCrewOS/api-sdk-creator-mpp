@@ -25,7 +25,7 @@ data class IpData(
 
 /*
  * Create a Marshaller and Unmarshaller that uses an existing data conversion library
- * into do work for our API calls.
+ * to do the work for our API calls.
  *
  * In a real SDK this would be done at application start time with the resulting functions
  * being passed to SDK specific operations.
@@ -43,7 +43,7 @@ val unmarshaller = gsonUnmarshaller(gson)
  *
  * A partial API client is returned because the function/pipeline needs to be composed with another function
  * that knows how to handle the result data/what type we're unmarshalling the JSON response data into. This is a
- * consequence of using a statically typed language like Kotlin where we have to defer some parts of the pipe to
+ * consequence of using a statically typed language like Kotlin where we have to defer some parts of the pipeline to
  * when specific types are known, while still trying to use a single pipeline definition as much as possible.
  */
 suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Exception, HttpResult<*, UnstructuredData>> {
@@ -53,7 +53,7 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
      * If this results in an Either.Left(Exception), when the HTTP request is piped through the API definition the
      * Exception would be returned.
      *
-     * Alternative in an SDK, this type of factory would be invoked near SDK initialisation, which would give the
+     * Alternatively in an SDK, this type of factory would be invoked near SDK initialisation, which would give the
      * opportunity to fail fast and not even continue the rest of the SDK instantiation.
      */
     val defaultHeaders = addHeaders(createHeaders(constantHeaders(mapOf("x-client-name" to "api-sdk-creator-kotlin"))))
@@ -70,6 +70,12 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
      * When the pipeline is run with a request, if any of these functions return a Either.Left(Exception), the overall
      * result of the pipeline will be an Exception which SDK specific operations will need to pass back to client
      * applications, or handle internally.
+     *
+     * The use of the `pipeK` operator is used to pipe the result of each expression to the next expression in the
+     * sequence. We take advantage of Kleisli arrows (hence the K) to compose (left to right) monad returning functions
+     * together.
+     *
+     * For a discussion of Kleisli see the `pipeK` documentation.
      */
     return defaultHeaders pipeK jsonMarshaller()(marshaller) pipeK client
 }
@@ -77,7 +83,7 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
 /*
  * This mimics an SDK specific operation. Here we want to check the IP of the computer we're running on.
  *
- * `checkIp` takes a partial API client and an JSON Unmarshaller to compose the final API pipeline
+ * `checkIp` takes a partial API client and a JSON Unmarshaller to compose the final API pipeline
  */
 suspend fun checkIp(
     client: suspend (HttpRequest<*>) -> Either<Exception, HttpResult<*, UnstructuredData>>,
@@ -115,10 +121,10 @@ suspend fun checkIp(
 
 fun main() {
     /*
-     * Because the functions in `api-sdk-creator` are suspending functions, to use an SDK operation, they need to be
-     * used in a Coroutine Scope.
+     * Because the functions in `api-sdk-creator` are suspending functions, the SDK operation is suspending as well.
+     * To use an SDK operation, we need to launch a Coroutine.
      *
-     * Because we want to wait here until we get the HTTP response from the server, we'll just block the execution
+     * We want to wait here until we get the HTTP response from the server, we'll just block the execution
      * of the program.
      *
      * In a real application (eg: an Android app) the Coroutine Scope would need to be assigned to a Dispatcher to be
