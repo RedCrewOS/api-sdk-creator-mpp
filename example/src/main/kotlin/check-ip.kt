@@ -1,6 +1,7 @@
 @file:JvmName("CheckIp")
 
 import arrow.core.Either
+import arrow.core.leftIfNull
 import au.com.redcrew.apisdkcreator.httpclient.*
 import au.com.redcrew.apisdkcreator.httpclient.arrow.pipeK
 import au.com.redcrew.apisdkcreator.httpclient.gson.gsonMarshaller
@@ -88,7 +89,7 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
 suspend fun checkIp(
     client: suspend (HttpRequest<*>) -> Either<Exception, HttpResult<*, UnstructuredData>>,
     jsonUnmarshaller: GenericJsonResultHandler
-): Either<Exception, IpData?> {
+): Either<Exception, IpData> {
     /*
      * The operation specific components of the request.
      */
@@ -115,8 +116,12 @@ suspend fun checkIp(
      *
      * If the result is an Either.Left, then the map() won't happen. This is the beauty of the Either monad in
      * action as we don't even have to think about error handling thanks to the polymorphic behaviour of monads.
+     *
+     * If the extraction process fails because there is no JSON data then the contract has been violated.
+     * We therefore convert the result to an Either.Left with an exception so that callers can handle the
+     * violation appropriately. Because `leftIfNull` is lazy, it wont create the exception until it's needed.
      */
-    return result.map(::extractHttpBody)
+    return result.map(::extractHttpBody).leftIfNull { IllegalStateException("Didn't get any JSON data") }
 }
 
 fun main() {
