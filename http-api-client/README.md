@@ -18,7 +18,7 @@ dependencies {
 ## Motivation
 
 To understand the motivation behind building this library, and the design decisions, see
-[the motivation doc](https://github.com/RedCrewOS/api-sdk-creator-js/blob/main/http-api-client/docs/motivation.md)
+[the original motivation doc](https://github.com/RedCrewOS/api-sdk-creator-js/blob/main/http-api-client/docs/motivation.md)
 
 This is a Kotlin port of the JS library. A lot of the type and function names have been carried over, however there are
 some important implementation differences.
@@ -42,14 +42,19 @@ This is very important in UI applications (eg: Android apps) where IO work shoul
 [IO Dispatcher](https://developer.android.com/kotlin/coroutines) so that a background thread is used, to prevent the 
 [UI being blocked on IO](https://developer.android.com/kotlin/coroutines/coroutines-best-practices#main-safe).
 
+It's worth noting that because the functions in this library never throw, exceptions in Coroutines can't be
+[silently dropped](https://medium.com/androiddevelopers/coroutines-on-android-part-ii-getting-started-3bff117176dd)
+and will always be returned in an `Either.Left` However if SDK developers choose the throw an exception, application
+developers will still have to make sure that they can handle exceptions thrown within Coroutines properly.
+
 #### Asynchronous task modelling
 
 While Crocks (in Javascript) has the `Async` monad to represent chainable units of concurrent work, Arrow uses Kotlin
 `suspend` functions [instead of a Monad](https://arrow-kt.io/docs/effects/io/).  As a result, ideas from the JS version 
 of api-sdk-creator had to be reworked to fit with this paradigm.
 
-One of the consequences of using `suspend` functions is that the orthodox Monad methods of `map` `chain`/`flatMap` can't
-be used. Thankfully Arrow offers [monad comprehensions](https://arrow-kt.io/docs/patterns/monad_comprehensions/)
+One of the consequences of using `suspend` functions is that the orthodox Monad methods of `map` `chain`/`flatMap` etc
+can't be used. Thankfully Arrow offers [monad comprehensions](https://arrow-kt.io/docs/patterns/monad_comprehensions/)
 which allow us to write code that composes monads together (like Crock's `chain`ing). While the code reads like imperative
 code, monad comprehensions will exit early if the result of `bind`ing a result is not mappable, etc. This preserves the
 monad semantics we want (`Option`, `Either`, etc) in code that has a lot less boilerplate, which is nice in a statically
