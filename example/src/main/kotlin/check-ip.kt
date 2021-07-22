@@ -114,7 +114,7 @@ suspend fun checkIp(
      */
      val result = pipeline(request)
 
-     /*
+    /*
      * Finally extract the response body from the HttpResult and return it to the SDK caller.
      *
      * If the result is an Either.Left, then the map() won't happen. This is the beauty of the Either monad in
