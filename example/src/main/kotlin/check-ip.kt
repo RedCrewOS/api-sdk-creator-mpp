@@ -68,13 +68,14 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
      * The library specific pieces have been abstracted away behind function types allowing for injection of any
      * compatible function and thus any compatible library.
      *
-     * When the pipeline is run with a request, if any of these functions return a Either.Left(Exception), the overall
+     * When the pipeline is run with a request, if any of these functions return an Either.Left(Exception), the overall
      * result of the pipeline will be an Exception which SDK specific operations will need to pass back to client
      * applications, or handle internally.
      *
      * The use of the `pipeK` operator is used to pipe the result of each expression to the next expression in the
-     * sequence. We take advantage of Kleisli arrows (hence the K) to compose (left to right) monad returning functions
-     * together.
+     * sequence. We take advantage of Kleisli arrows (hence the K) to compose monad returning functions together in a
+     * left to right reading style. Traditional function composition reads right to left (compose/composeK), however
+     * the pipe style can aid in readability given most developers read left to right by default.
      *
      * For a discussion of Kleisli see the `pipeK` documentation.
      */
