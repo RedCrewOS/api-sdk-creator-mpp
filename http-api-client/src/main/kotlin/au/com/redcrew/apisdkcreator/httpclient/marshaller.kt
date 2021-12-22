@@ -18,6 +18,7 @@ private fun <T> takeFirst(lst: List<T>): T = lst.first()
 // trim :: String -> String
 private fun trim(str: String) = str.trim()
 
+// isSame :: a -> b -> Boolean
 private fun isSame(a: Any): (b: Any) -> Boolean = { b -> a == b }
 
 // hasContentType :: String -> HttpResult -> Boolean
