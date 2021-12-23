@@ -32,11 +32,11 @@ private fun hasContentType(contentType: String, response: HttpResponse<*>): Bool
        .map(split(";") andThen ::takeFirst andThen ::trim andThen isSame(contentType))
        .getOrElse { false }
 
-private fun <T> unsupportedContentType(response: HttpResponse<UnstructuredData>): (Either<HttpResponse<UnstructuredData>, HttpResponse<T>>) -> Either<Exception, HttpResponse<T>> =
-    { unmarshalledResponse ->
-        // if we have a Left(HttpResponse<UnstructuredData>) then we need to convert that to an error.
-        unmarshalledResponse.mapLeft { IllegalStateException("Unrecognised content type '${response.headers["content-type"]}'") }
-    }
+private fun <T> unsupportedContentType(
+    response: Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
+): Either<Exception, HttpResponse<T>> =
+    // if we have a Left(HttpResponse<UnstructuredData>) then we need to convert that to an error.
+    response.mapLeft { IllegalStateException("Unrecognised content type '${it.headers["content-type"]}'") }
 
 /**
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
@@ -117,7 +117,7 @@ fun <T> unmarshaller(vararg unmarshallers: ResponseUnmarshaller<T>): HttpResultH
                     )
                 }
             }
-            .flatMap(unsupportedContentType(response))
+            .flatMap(::unsupportedContentType)
             .bimap(::identity) { resp ->
                 HttpResult(
                     request = result.request,

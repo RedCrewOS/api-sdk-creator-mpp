@@ -220,6 +220,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             val error = unmarshallers(result).fold(::identity, ::throwException)
 
             assertThat(error is IllegalStateException, equalTo(true))
+            assertThat((error as IllegalStateException).message, equalTo("Unrecognised content type 'image/png'"))
         }
     }
 }
