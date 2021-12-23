@@ -8,6 +8,11 @@ import kotlin.reflect.KClass
 
 typealias Marshaller = suspend (Any) -> Either<Exception, UnstructuredData>
 typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<Exception, T>
+typealias ResponseUnmarshaller<T> = suspend (HttpResponse<UnstructuredData>) ->
+    Either<
+        Exception,
+        Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
+    >
 
 // split :: String -> String -> List String
 private fun split(delimiter: String): (String) -> List<String> = { str -> str.split(delimiter) }
@@ -27,25 +32,26 @@ private fun hasContentType(contentType: String, response: HttpResponse<*>): Bool
        .map(split(";") andThen ::takeFirst andThen ::trim andThen isSame(contentType))
        .getOrElse { false }
 
-private fun <T> unsupportedContentType(response: HttpResponse<UnstructuredData>): (HttpResponse<T>) -> Either<Exception, HttpResponse<T>> =
+private fun <T> unsupportedContentType(response: HttpResponse<UnstructuredData>): (Either<HttpResponse<UnstructuredData>, HttpResponse<T>>) -> Either<Exception, HttpResponse<T>> =
     { unmarshalledResponse ->
-        Either.conditionally(
-            response.body == null || unmarshalledResponse.body != null,
-            { IllegalStateException("Unrecognised content type '${response.headers["content-type"]}'") },
-            { unmarshalledResponse }
-        )
+        // if we have a Left(HttpResponse<UnstructuredData>) then we need to convert that to an error.
+        unmarshalledResponse.mapLeft { IllegalStateException("Unrecognised content type '${response.headers["content-type"]}'") }
     }
 
 /**
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
  * an instance of the marshaller can be configured for the correct content type.
  *
- * The abstraction of how to actually convert between a type and an Unstructured data type is so that users can wrap the
+ * The abstraction of how to actually convert between a type and an UnstructuredData type is so that users can wrap the
  * library of their choice.
  *
  * If an application/SDK wishes to support multiple marshallers to take advantage of content negotiation the
  * application will need to orchestrate the selection process.
+ *
+ * The result is a HttpRequestPolicy that will transform the body of the request (if present)
+ * and add the Content-Type request header.
  */
+// marshallerFor :: String -> Marshaller -> HttpRequestPolicy<a, UnstructuredData>
 fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, UnstructuredData> =
     { marshaller ->
         { request ->
@@ -66,16 +72,19 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
  * an instance of the unmarshaller can be configured for the correct content type.
  *
- * The abstraction of how to actually convert between Unstructured data and another type is so that users can wrap the
+ * The abstraction of how to actually convert between UnstructuredData and another type is so that users can wrap the
  * library of their choice.
  *
- * We can't guarantee the content type of the response is something an unmarshaller can handle, therefore it might
- * not be able to process the content type and therefore has to return nothing. This allows for content negotiation
- * where a chain of unmarshallers can be composed to handle different response types. It also caters for the scenarios,
- * most often in corporate networks, where a misconfigured gateway/endpoint returns a different content type due to it
- * being misconfigured. Often this is HTML, where as an application/SDK might be expecting JSON/XML in the response.
+ * We can't guarantee the content type of a response is something an unmarshaller can process, therefore the result is
+ * either the original response unchanged (left), or the response with the body unmarshalled (right), or an error from
+ * trying to unmarshall the response body.
+ *
+ * This allows for content negotiation where a chain of unmarshallers can be composed to handle different response
+ * content types. It also caters for the scenarios, most often in corporate networks, where a misconfigured
+ * gateway/endpoint returns a different content type due to it being misconfigured. Often this is HTML, whereas an
+ * application/SDK might be expecting JSON/XML in the response.
  */
-// unmarshallerFor :: String -> Unmarshaller<T> -> HttpResponseHandler<UnstructuredData, T>
+// unmarshallerFor :: String -> Unmarshaller<T> -> ResponseUnmarshaller<T>
 fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedResponseUnmarshaller(contentType)
 
 /**
@@ -84,24 +93,28 @@ fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedRespo
  * Each function tries to unmarshall the UnstructuredData into some other (structured) type.
  * If no function succeeds, then an "Unsupported content type" error is returned.
  */
-fun <T> unmarshaller(vararg unmarshallers: HttpResponseHandler<UnstructuredData, T>): HttpResultHandler<*, UnstructuredData, T> =
+// unmarshaller :: [ ResponseUnmarshaller<T> ] -> HttpResultHandler
+fun <T> unmarshaller(vararg unmarshallers: ResponseUnmarshaller<T>): HttpResultHandler<*, UnstructuredData, T> =
     { result ->
         val response = result.response
-        val initial = HttpResponse<T>(
-            response.statusCode,
-            response.statusMessage,
-            response.headers
-        )
+        val initial: Either<Exception, Either<HttpResponse<UnstructuredData>, HttpResponse<T>>> =
+            Either.Right(Either.Left(response))
 
         /*
          * Recurse through the unmarshallers trying to unmarshall the UnstructuredData until one unmarshaller
-         * succeeds, or no unmarshaller succeeds so we have an "unsupported content type error"
+         * succeeds, or no unmarshaller succeeds in which case we have an "unsupported content type error" result
          */
         unmarshallers
-            .fold(Either.Right(initial) as Either<java.lang.Exception, HttpResponse<T>>) { acc, unmarshaller ->
-                either {
-                    val resp = acc.bind()
-                    resp.body?.let { resp } ?: unmarshaller(response).bind()
+            .fold(initial) { acc, unmarshaller ->
+                acc.flatMap { resp: Either<HttpResponse<UnstructuredData>, HttpResponse<T>> ->
+                    /*
+                     * If the response hasn't been unmarshalled (left) then try,
+                     * else the response has (right) so just return it.
+                     */
+                    resp.fold(
+                        { unmarshaller(it) },
+                        { it.right().right() }
+                    )
                 }
             }
             .flatMap(unsupportedContentType(response))
@@ -125,21 +138,28 @@ interface GenericTypeUnmarshaller: GenericTypeCurriedFunction {
 }
 
 /**
- * Used to create a function that, given an Unmarshaller, will return an HttpResponseHandler to unmarshall the
+ * Used to create a function that, given an Unmarshaller, will return an ResponseUnmarshaller to try and unmarshall the
  * HttpResponse body.
  */
-// TypedResponseUnmarshaller :: (Unmarshaller<T>) -> HttpResponseHandler<UnstructuredData, T>
+// TypedResponseUnmarshaller :: (Unmarshaller<T>) -> ResponseUnmarshaller<T>
 class TypedResponseUnmarshaller(
     private val contentType: String
 ) : GenericTypeCurriedFunction {
-    operator fun <T : Any> invoke(p1: Unmarshaller<T>): HttpResponseHandler<UnstructuredData, T> {
-        return { response ->
+    operator fun <T : Any> invoke(p1: Unmarshaller<T>): ResponseUnmarshaller<T> {
+        return { response: HttpResponse<UnstructuredData> ->
             either {
-                val body: T? =
-                    if (hasContentType(contentType, response)) { response.body?.let { p1(it).bind() } }
-                    else { null }
-
-                response.copyWithBody(body = body)
+                response.body?.let {
+                    when {
+                        hasContentType(contentType, response) -> response.copyWithBody(body = p1(it).bind()).right()
+                        else -> response.left()
+                    }
+                } ?: run {
+                    /*
+                     * If we don't have a body to try to unmarshall, then we should consider the unmarshalling
+                     * successful.
+                     */
+                    response.copyWithBody<T>(body = null).right()
+                }
             }
         }
     }

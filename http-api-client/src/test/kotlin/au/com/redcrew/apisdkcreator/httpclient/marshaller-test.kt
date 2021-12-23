@@ -100,7 +100,9 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
 
         @Test
         fun `should unmarshall response body`() = dispatcher.runBlockingTest {
-            val result = unmarshall().fold(::throwException, ::identity)
+            val result = unmarshall()
+                .fold(::throwException, ::identity)
+                .fold(::throwUnstructuredDataException, ::identity)
 
             assertThat(result.body, equalTo(body))
         }
@@ -112,22 +114,27 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
                 .withBody(json)
                 .build()
 
-            val result = unmarshall(response).fold(::throwException, ::identity)
+            val result = unmarshall(response)
+                .fold(::throwException, ::identity)
+                .fold(::identity, ::throwUnmarshalledDataException)
 
-            assertThat(result.body, equalTo(null))
+            assertThat(result, equalTo(response))
         }
 
         @Test
         fun `should not unmarshall response body when no response body`() = dispatcher.runBlockingTest {
             val response = this@UnmarshallerForTest.response.copy(body = null)
 
-            val result = unmarshall(response).fold(::throwException, ::identity)
+            // we expect an Either.Right as the result since there is no body.
+            val result = unmarshall(response)
+                .fold(::throwException, ::identity)
+                .fold(::throwUnstructuredDataException, ::identity)
 
             assertThat(result.body, equalTo(null))
         }
 
         @Test
-        fun `should reject when error unmarshalling response body`() = dispatcher.runBlockingTest {
+        fun `should return error when error unmarshalling response body`() = dispatcher.runBlockingTest {
             val error = Exception("fake marshalling error")
             val unmarshaller: Unmarshaller<TestBody> = { error.left() }
 
@@ -140,23 +147,40 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             result: HttpResponse<UnstructuredData> = this.response,
             unmarshaller: Unmarshaller<TestBody> = this.unmarshaller,
             contentType: String = this@MarshallingTest.contentType
-        ): Either<Exception, HttpResponse<TestBody>> =
+        ): Either<Exception, Either<HttpResponse<UnstructuredData>, HttpResponse<TestBody>>> =
             unmarshallerFor(contentType)(unmarshaller)(result)
+
+        private fun <T> throwUnstructuredDataException(
+            @Suppress("UNUSED_PARAMETER") response: HttpResponse<UnstructuredData>
+        ): HttpResponse<T> {
+            throw IllegalStateException("Expected HttpResponse to have had body unmarshalled")
+        }
+
+        private fun <T> throwUnmarshalledDataException(
+            @Suppress("UNUSED_PARAMETER") response: HttpResponse<T>
+        ): HttpResponse<T> {
+            throw IllegalStateException("HttpResponse erroneously had body unmarshalled")
+        }
     }
 
     @Nested
     @DisplayName("unmarshaller")
     inner class UnmarshallerTest {
-        private val makeUnmarshaller: (String, String) -> HttpResponseHandler<UnstructuredData, String> =
+        private val makeUnmarshaller: (String, String) -> ResponseUnmarshaller<String> =
             { contentType: String, data: String?  ->
                 { response ->
-                    val body: String? = Either.conditionally(
-                        response.headers.containsValue(contentType) && response.body != null,
-                        { null },
-                        { data }
-                    ).merge()
-
-                    Either.Right(response.copyWithBody(body = body))
+                    response.body?.let {
+                        when {
+                            response.headers.containsValue(contentType) -> {
+                                Either.Right(response.copyWithBody(body = data).right())
+                            }
+                            else -> {
+                                Either.Right(response.left())
+                            }
+                        }
+                    } ?: run {
+                        Either.Right(response.copyWithBody<String>(body = null).right())
+                    }
                 }
             }
 
@@ -167,18 +191,6 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         private val unmarshallers = unmarshaller(jsonUnmarshaller, plainTextUnmarshaller, anotherPlainTextUnmarshaller)
 
         private val responseHeaders = mapOf("content-type" to "text/plain")
-
-        @Test
-        fun `should return nothing when no response body`() = dispatcher.runBlockingTest {
-            val result = HttpResult(
-                request = aHttpRequest<String>().build(),
-                response = aHttpResponse<UnstructuredData>().withHeaders(responseHeaders).build()
-            )
-
-            val body = unmarshallers(result).fold(::throwException, ::identity).response.body
-
-            assertThat(body, equalTo(null))
-        }
 
         @Test
         fun `should return first unmarshalled body`() = dispatcher.runBlockingTest {
