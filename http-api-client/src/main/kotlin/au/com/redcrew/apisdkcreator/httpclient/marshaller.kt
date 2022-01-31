@@ -56,9 +56,14 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
     { marshaller ->
         { request ->
             val result = option {
-                marshaller(Option.fromNullable(request.body).bind()).map {
-                    data -> request.copyWithBody(headers = mapOf("content-type" to contentType), body = data)
-                }.bind()
+                val body = Option.fromNullable(request.body).bind()
+
+                marshaller(body).map {
+                    request.copyWithBody(
+                        headers = mapOf("content-type" to contentType),
+                        body = it
+                    )
+                }
             }
 
             result.fold(
