@@ -10,6 +10,6 @@ dependencies {
     implementation project(":gson")
 
     // TODO: Align with kotlinx-coroutines used by arrow-fx-coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${rootProject.ext.kotlinCoroutinesVersion}"
 }
 
