@@ -1,10 +1,7 @@
 package au.com.redcrew.apisdkcreator.httpclient.gson
 
 import arrow.core.Either
-import au.com.redcrew.apisdkcreator.httpclient.Marshaller
-import au.com.redcrew.apisdkcreator.httpclient.GenericTypeUnmarshaller
-import au.com.redcrew.apisdkcreator.httpclient.UnstructuredDataToGenericTypeUnmarshaller
-import au.com.redcrew.apisdkcreator.httpclient.UnstructuredData
+import au.com.redcrew.apisdkcreator.httpclient.*
 import com.google.gson.Gson
 import kotlin.reflect.KClass
 
@@ -15,7 +12,7 @@ fun gsonMarshaller(gson: Gson): Marshaller = {
     }
     // we don't want to catch Throwables
     catch (e: Exception) {
-        Either.Left(e)
+        Either.Left(SdkError(MARSHALLING_ERROR_TYPE, e.message ?: "", e))
     }
 }
 

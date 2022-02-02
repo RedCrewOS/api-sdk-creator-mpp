@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.reflect.KClass
+import kotlin.test.Ignore
 
 @ExperimentalCoroutinesApi
 @ExtendWith(CoroutineExtension::class)
@@ -33,6 +34,7 @@ class UnstructuredDataTest(val dispatcher: TestCoroutineDispatcher) {
             assertThat(result, equalTo(1234))
         }
 
+        @Ignore
         @Test
         fun `should return error when unmarshalling fails`() = dispatcher.runBlockingTest {
             val error = Exception("Something went wrong")

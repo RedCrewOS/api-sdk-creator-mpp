@@ -1,8 +1,10 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
+import arrow.core.identity
+import au.com.redcrew.apisdkcreator.test.throwException
+import au.com.redcrew.apisdkcreator.test.throwSdkError
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import com.natpryce.hamkrest.throws
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -14,10 +16,9 @@ class BaseHttpClientTest {
     inner class PathParamsTest {
         @Test
         fun `should throw error if value for param not found`() {
-            assertThat(
-                { replacePathParams("customer/:id/account/:accountNumber", emptyMap()) },
-                throws<IllegalArgumentException>()
-            )
+            val result = replacePathParams("customer/:id/account/:accountNumber", emptyMap()).fold(::identity, ::throwException)
+
+            assertThat(result.type, equalTo(ILLEGAL_ARGUMENT_ERROR_TYPE))
         }
 
         @Test
@@ -25,7 +26,7 @@ class BaseHttpClientTest {
             val path = replacePathParams("customer/:id/account/:accountNumber", mapOf(
                 "id" to "123",
                 "accountNumber" to "456"
-            ))
+            )).fold(::throwSdkError, ::identity)
 
             assertThat(path, equalTo("customer/123/account/456"))
         }

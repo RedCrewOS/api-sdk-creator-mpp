@@ -1,7 +1,7 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.*
-import java.lang.Exception
+import au.com.redcrew.apisdkcreator.httpclient.lang.parseInt
 
 /**
  * Helper to get the response in a {@link HttpResult}
@@ -24,9 +24,6 @@ fun <T> getHttpBody(response: HttpResponse<T>): T? = response.body
 // extractHttpBody :: HttpResult -> a
 fun <T> extractHttpBody(result: HttpResult<*, T>): T? = getHttpBody(getHttpResponse(result))
 
-// parseIntValue :: a -> Either Exception Integer
-fun parseIntValue(a: String): Either<Exception, Int> = Either.catch({ t -> t as Exception }, { Integer.parseInt(a) })
-
 /**
  * Tries to take a header value and parse it to an int.
  *
@@ -36,8 +33,8 @@ fun parseIntValue(a: String): Either<Exception, Int> = Either.catch({ t -> t as 
  * might be OK (eg: content-length). Use `toEither` to force an error if the header is
  * missing.
  */
-// parseIntHeader :: (String, HttpHeaders) -> Either Exception Option Integer
-fun parseIntHeader(header: String, headers: HttpHeaders): Either<Exception, Option<Int>> =
+// parseIntHeader :: (String, HttpHeaders) -> Either SdkError Option Integer
+fun parseIntHeader(header: String, headers: HttpHeaders): Either<SdkError, Option<Int>> =
     Option.fromNullable(headers[header])
-        .map(::parseIntValue)
+        .map(::parseInt)
         .sequenceEither()

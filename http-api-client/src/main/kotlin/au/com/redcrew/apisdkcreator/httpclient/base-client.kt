@@ -1,20 +1,24 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
-import java.lang.IllegalArgumentException
-import java.net.URLEncoder
+import arrow.core.*
+import au.com.redcrew.apisdkcreator.httpclient.net.urlEncoder
 
-fun replacePathParams(path: String, params: Map<String, String>): String =
+fun replacePathParams(path: String, params: Map<String, String>): Either<SdkError, String> =
     path.split("/")
-        .map { segment ->
+        .map { segment: String ->
             if (segment.startsWith(":")) {
-                val value = params[segment.substring(1)]
+                val value = Option.fromNullable(params[segment.substring(1)])
 
-                return@map value ?: run { throw IllegalArgumentException("No value provided for '${segment}'") }
+                return@map value.fold(
+                    { SdkError(ILLEGAL_ARGUMENT_ERROR_TYPE, "No value provided for '${segment}'").left() },
+                    { it.right() }
+                )
             }
 
-            return@map segment
+            return@map segment.right()
         }
-        .joinToString("/")
+        .sequenceEither()
+        .map { it.joinToString("/") }
 
 fun createQueryString(params: Map<String, String>): String =
     when {
@@ -23,4 +27,4 @@ fun createQueryString(params: Map<String, String>): String =
     }
 
 private fun mapEntryToPair(entry: Map.Entry<String, String>): String =
-    "${entry.key}=${URLEncoder.encode(entry.value, "utf-8")}"
+    "${entry.key}=${urlEncoder(entry.value, "utf-8")}"

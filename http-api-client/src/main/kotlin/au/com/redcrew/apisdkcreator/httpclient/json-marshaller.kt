@@ -17,7 +17,7 @@ fun jsonMarshaller(contentType: String = JSON_MIME_TYPE): (Marshaller) -> HttpRe
 /**
  * A factory function to aid in unmarshalling JSON data
  *
- * The returned HttpResultHandler will return an Exception if anything other than the given content type is
+ * The returned HttpResultHandler will return an SdkError if anything other than the given content type is
  * in the HttpResponse.
  */
 // jsonUnmarshaller :: (KClass<T> -> Unmarshaller<T>, String) -> KClass<T> -> HttpResultHandler<*, UnstructuredData, T>

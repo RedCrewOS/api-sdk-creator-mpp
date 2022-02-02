@@ -5,6 +5,7 @@ import arrow.core.identity
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.test.CoroutineExtension
 import au.com.redcrew.apisdkcreator.test.throwException
+import au.com.redcrew.apisdkcreator.test.throwSdkError
 import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.Matcher
 import com.natpryce.hamkrest.assertion.assertThat
@@ -31,7 +32,7 @@ class RequestTest(val dispatcher: TestCoroutineDispatcher) {
         fun `should add to existing headers`() = dispatcher.runBlockingTest {
             val headers = mapOf("x-app-header" to "abc123")
 
-            val result = addHeaders { Either.Right(headers) }(request).fold(::throwException, ::identity)
+            val result = addHeaders { Either.Right(headers) }(request).fold(::throwSdkError, ::identity)
 
             assertThat(result.headers["authorization"], equalTo(request.headers["authorization"]))
             assertThat(result.headers["x-app-header"], equalTo(headers["x-app-header"]))
@@ -41,7 +42,7 @@ class RequestTest(val dispatcher: TestCoroutineDispatcher) {
 
         @Test
         fun `should return error if factory fails to create headers`() = dispatcher.runBlockingTest {
-            val error = Exception("Can't create headers")
+            val error = SdkError("fake-error", "Can't create headers")
 
             val result = addHeaders { Either.Left(error) }(request).fold(::identity, ::throwException)
 
@@ -59,20 +60,19 @@ class RequestTest(val dispatcher: TestCoroutineDispatcher) {
             val path = "/v1/foo/bar"
             val request = aHttpRequest<Any>().withUrl(HttpRequestUrl.String(path)).build()
 
-            val result = resolveUrl(base)(request).fold(::throwException, ::identity)
+            val result = resolveUrl(base)(request).fold(::throwSdkError, ::identity)
 
             assertThat(result.url, equalTo(HttpRequestUrl.String("${base}${path}")))
         }
 
         @Test
         fun `should return error if trying to resolve an absolute url`() = dispatcher.runBlockingTest {
-            @Suppress("BlockingMethodInNonBlockingContext")
             val url = URL("http://localhost")
             val request = aHttpRequest<Any>().withUrl(HttpRequestUrl.URL(url)).build()
 
             val result = resolveUrl(base)(request).fold(::identity, ::throwException)
 
-            assertThat(result is IllegalArgumentException, equalTo(true))
+            assertThat(result.type, equalTo(ILLEGAL_STATE_ERROR_TYPE))
         }
     }
 

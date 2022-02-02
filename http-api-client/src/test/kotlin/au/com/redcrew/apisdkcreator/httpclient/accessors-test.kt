@@ -3,12 +3,12 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.*
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
+import au.com.redcrew.apisdkcreator.test.throwException
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.lang.NumberFormatException
 
 @DisplayName("accessors")
 class AccessorsTest {
@@ -35,10 +35,10 @@ class AccessorsTest {
             }
 
             @Test
-            fun `should return error is header value not a number`() {
-                val result = parseIntHeader("x-header", mapOf("x-header" to "abc")).merge()
+            fun `should return error if header value not a number`() {
+                val result = parseIntHeader("x-header", mapOf("x-header" to "abc")).fold(::identity, ::throwException)
 
-                assertThat(result is NumberFormatException, equalTo(true))
+                assertThat(result.type, equalTo(INVALID_NUMBER_ERROR_TYPE))
             }
 
             @Test

@@ -5,6 +5,7 @@ import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
 import au.com.redcrew.apisdkcreator.test.CoroutineExtension
 import au.com.redcrew.apisdkcreator.test.throwException
+import au.com.redcrew.apisdkcreator.test.throwSdkError
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.sameInstance
@@ -41,7 +42,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
 
         @Test
         fun `should set content type`() = dispatcher.runBlockingTest {
-            val result = marshall().fold(::throwException, ::identity)
+            val result = marshall().fold(::throwSdkError, ::identity)
 
             assertThat(result.headers["content-type"], equalTo(contentType))
         }
@@ -50,7 +51,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         fun `should set no content type when no request body`() = dispatcher.runBlockingTest {
             val request = aHttpRequest<TestBody>().build()
 
-            val result = marshall(request).fold(::throwException, ::identity)
+            val result = marshall(request).fold(::throwSdkError, ::identity)
 
             assertThat(result.headers["content-type"], equalTo(null))
         }
@@ -59,21 +60,21 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         fun `should not marshall body when no request body`() = dispatcher.runBlockingTest {
             val request = aHttpRequest<TestBody>().build()
 
-            val result = marshall(request).fold(::throwException, ::identity)
+            val result = marshall(request).fold(::throwSdkError, ::identity)
 
             assertThat(result.body, equalTo(null))
         }
 
         @Test
         fun `should marshall request body`() = dispatcher.runBlockingTest {
-            val result = marshall().fold(::throwException, ::identity)
+            val result = marshall().fold(::throwSdkError, ::identity)
 
             assertThat(result.body, equalTo(json))
         }
 
         @Test
         fun `should return error when error marshalling request body`() = dispatcher.runBlockingTest {
-            val error = Exception("fake marshalling error")
+            val error = SdkError("fake-error", "fake marshalling error")
             val marshaller: Marshaller = { error.left() }
 
             val result = marshall(request, marshaller).fold(::identity, ::throwException)
@@ -85,7 +86,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             request: HttpRequest<TestBody> = this.request,
             marshaller: Marshaller = this.marshaller,
             contentType: String = this@MarshallingTest.contentType,
-        ): Either<Exception, HttpRequest<UnstructuredData>> =
+        ): Either<SdkError, HttpRequest<UnstructuredData>> =
             marshallerFor(contentType)(marshaller)(request)
     }
 
@@ -101,7 +102,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         @Test
         fun `should unmarshall response body`() = dispatcher.runBlockingTest {
             val result = unmarshall()
-                .fold(::throwException, ::identity)
+                .fold(::throwSdkError, ::identity)
                 .fold(::throwUnstructuredDataException, ::identity)
 
             assertThat(result.body, equalTo(body))
@@ -115,7 +116,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
                 .build()
 
             val result = unmarshall(response)
-                .fold(::throwException, ::identity)
+                .fold(::throwSdkError, ::identity)
                 .fold(::identity, ::throwUnmarshalledDataException)
 
             assertThat(result, equalTo(response))
@@ -127,7 +128,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
 
             // we expect an Either.Right as the result since there is no body.
             val result = unmarshall(response)
-                .fold(::throwException, ::identity)
+                .fold(::throwSdkError, ::identity)
                 .fold(::throwUnstructuredDataException, ::identity)
 
             assertThat(result.body, equalTo(null))
@@ -135,7 +136,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
 
         @Test
         fun `should return error when error unmarshalling response body`() = dispatcher.runBlockingTest {
-            val error = Exception("fake marshalling error")
+            val error = SdkError("fake-error", "fake marshalling error")
             val unmarshaller: Unmarshaller<TestBody> = { error.left() }
 
             val result = unmarshall(response, unmarshaller).fold(::identity, ::throwException)
@@ -147,7 +148,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             result: HttpResponse<UnstructuredData> = this.response,
             unmarshaller: Unmarshaller<TestBody> = this.unmarshaller,
             contentType: String = this@MarshallingTest.contentType
-        ): Either<Exception, Either<HttpResponse<UnstructuredData>, HttpResponse<TestBody>>> =
+        ): Either<SdkError, Either<HttpResponse<UnstructuredData>, HttpResponse<TestBody>>> =
             unmarshallerFor(contentType)(unmarshaller)(result)
 
         private fun <T> throwUnstructuredDataException(
@@ -202,7 +203,7 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
                     .build()
             )
 
-            val body = unmarshallers(result).fold(::throwException, ::identity).response.body
+            val body = unmarshallers(result).fold(::throwSdkError, ::identity).response.body
 
             assertThat(body, equalTo("This is some text"))
         }
@@ -219,8 +220,8 @@ class MarshallingTest(val dispatcher: TestCoroutineDispatcher) {
 
             val error = unmarshallers(result).fold(::identity, ::throwException)
 
-            assertThat(error is IllegalStateException, equalTo(true))
-            assertThat((error as IllegalStateException).message, equalTo("Unrecognised content type 'image/png'"))
+            assertThat(error.type, equalTo(UNMARSHALLING_ERROR_TYPE))
+            assertThat(error.message, equalTo("Unrecognised content type 'image/png'"))
         }
     }
 }

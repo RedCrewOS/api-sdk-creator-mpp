@@ -176,7 +176,7 @@ class OkHttpHttpClientTest {
 
                 val result = okHttpClient()(request).fold(::identity, ::throwException)
 
-                assertThat(result is IllegalArgumentException, equalTo(true))
+                assertThat(result.type, equalTo(ILLEGAL_ARGUMENT_ERROR_TYPE))
             }
         }
 
@@ -231,8 +231,7 @@ class OkHttpHttpClientTest {
 
                 val result = okHttpClient()(request).fold(::identity, ::throwException)
 
-                assertThat(result is IllegalArgumentException, equalTo(true))
-                assertThat((result as IllegalArgumentException).message, equalTo("Missing content-type"))
+                assertThat(result.message, equalTo("Missing content-type"))
             }
 
             @Test
@@ -255,7 +254,7 @@ class OkHttpHttpClientTest {
         inner class ErrorsTest {
             @Test
             fun `should return error when non HTTP error occurs`() = runBlocking {
-                val request = request.copy(url = HttpRequestUrl.String("http://127.0.0.1:808080"))
+                val request = request.copy(url = HttpRequestUrl.String("http://127.0.0.1:8080"))
 
                 okHttpClient()(request).fold(::identity, ::throwException)
 

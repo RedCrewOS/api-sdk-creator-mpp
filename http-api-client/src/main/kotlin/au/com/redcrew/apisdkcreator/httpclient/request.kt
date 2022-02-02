@@ -77,7 +77,7 @@ data class HttpRequest<T>(
  * @param headers To be used if one header value depends on another.
  * @returns A new set of headers.
  */
-typealias RequestHeaderFactory = suspend (headers: HttpHeaders) -> Either<Exception, HttpHeaders>
+typealias RequestHeaderFactory = suspend (headers: HttpHeaders) -> Either<SdkError, HttpHeaders>
 
 /**
  * Factory definition to create a set of HTTP headers.
@@ -87,7 +87,7 @@ typealias RequestHeaderFactory = suspend (headers: HttpHeaders) -> Either<Except
  * @typedef {function} RequestHeadersFactory
  * @returns A new set of headers.
  */
-typealias RequestHeadersFactory = suspend () -> Either<Exception, HttpHeaders>
+typealias RequestHeadersFactory = suspend () -> Either<SdkError, HttpHeaders>
 
 /**
  * Creates a {@link HttpRequestPolicy} to add headers to a request
@@ -105,7 +105,7 @@ suspend fun resolveUrl(base: String): HttpRequestPolicy<*, *> = { request ->
     either {
         val url = when(request.url) {
             is HttpRequestUrl.String -> Either.Right("${base}${request.url.url}")
-            else -> Either.Left(IllegalArgumentException("Can't resolve a URL"))
+            else -> Either.Left(SdkError(ILLEGAL_STATE_ERROR_TYPE, "Can't resolve a URL"))
         }.bind()
 
         request.copy(url = HttpRequestUrl.String(url))

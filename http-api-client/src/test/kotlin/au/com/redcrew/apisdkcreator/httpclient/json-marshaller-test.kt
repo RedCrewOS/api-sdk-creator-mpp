@@ -7,6 +7,7 @@ import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
 import au.com.redcrew.apisdkcreator.test.CoroutineExtension
 import au.com.redcrew.apisdkcreator.test.throwException
+import au.com.redcrew.apisdkcreator.test.throwSdkError
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,22 +42,22 @@ class JsonMarshallingTest(val dispatcher: TestCoroutineDispatcher) {
         fun `should set content type`() = dispatcher.runBlockingTest {
             val contentType = "application/json+vnd"
 
-            val result = marshall(contentType).fold(::throwException, ::identity)
+            val result = marshall(contentType).fold(::throwSdkError, ::identity)
 
             assertThat(result.headers["content-type"], equalTo(contentType))
         }
 
         @Test
         fun `should default content type`() = dispatcher.runBlockingTest {
-            val result = marshall().fold(::throwException, ::identity)
+            val result = marshall().fold(::throwSdkError, ::identity)
 
             assertThat(result.headers["content-type"], equalTo(JSON_MIME_TYPE))
         }
 
-        private suspend fun marshall(contentType: String): Either<Exception, HttpRequest<UnstructuredData>> =
+        private suspend fun marshall(contentType: String): Either<SdkError, HttpRequest<UnstructuredData>> =
             jsonMarshaller(contentType)(marshaller)(request)
 
-        private suspend fun marshall(): Either<Exception, HttpRequest<UnstructuredData>> =
+        private suspend fun marshall(): Either<SdkError, HttpRequest<UnstructuredData>> =
             jsonMarshaller()(marshaller)(request)
     }
 
@@ -81,20 +82,20 @@ class JsonMarshallingTest(val dispatcher: TestCoroutineDispatcher) {
             // since we want to unmarshall text/plain we should ignore the data and get back an error
             val result = unmarshall(contentType).fold(::identity, ::throwException)
 
-            assertThat(result is IllegalStateException, equalTo(true))
+            assertThat(result.type, equalTo(UNMARSHALLING_ERROR_TYPE))
         }
 
         @Test
         fun `should default content type`() = dispatcher.runBlockingTest {
-            val result = unmarshall().fold(::throwException, ::identity)
+            val result = unmarshall().fold(::throwSdkError, ::identity)
 
             assertThat(result.response.body, equalTo(body))
         }
 
-        private suspend fun unmarshall(contentType: String): Either<Exception, HttpResult<*, TestBody>> =
+        private suspend fun unmarshall(contentType: String): Either<SdkError, HttpResult<*, TestBody>> =
             jsonUnmarshaller(factory, contentType)(TestBody::class)(result)
 
-        private suspend fun unmarshall(): Either<Exception, HttpResult<*, TestBody>> =
+        private suspend fun unmarshall(): Either<SdkError, HttpResult<*, TestBody>> =
             jsonUnmarshaller(factory)(TestBody::class)(result)
     }
 }

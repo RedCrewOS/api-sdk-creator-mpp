@@ -16,7 +16,7 @@ import arrow.core.Either
  * @param {HttpRequest} request
  * @returns Either the {@link HttpResponse} or the error.
  */
-typealias HttpApiClient<A, B> = suspend (request: HttpRequest<A>) -> Either<Exception, HttpResponse<B>>
+typealias HttpApiClient<A, B> = suspend (request: HttpRequest<A>) -> Either<SdkError, HttpResponse<B>>
 
 /**
  * A HttpClient deals strictly with {@link UnstructuredData} types. To use a HttpClient with
@@ -30,7 +30,7 @@ typealias HttpApiClient<A, B> = suspend (request: HttpRequest<A>) -> Either<Exce
  *
  * Errors should only be used to indicate unrecoverable problems like a network being unavailable.
  */
-typealias HttpClient = suspend (request: HttpRequest<UnstructuredData>) -> Either<Exception, HttpResult<UnstructuredData, UnstructuredData>>
+typealias HttpClient = suspend (request: HttpRequest<UnstructuredData>) -> Either<SdkError, HttpResult<UnstructuredData, UnstructuredData>>
 
 /**
  * The result of sending an {@link HttpRequest} to an endpoint.
@@ -57,7 +57,7 @@ data class HttpResult<A, B>(
  * @param {HttpRequest} request
  * @returns An updated {@link HttpRequest}
  */
-typealias HttpRequestPolicy<A, B> = suspend (request: HttpRequest<A>) -> Either<Exception, HttpRequest<B>>
+typealias HttpRequestPolicy<A, B> = suspend (request: HttpRequest<A>) -> Either<SdkError, HttpRequest<B>>
 
 /**
  * Examines and handles the result of calling an endpoint.
@@ -70,7 +70,7 @@ typealias HttpRequestPolicy<A, B> = suspend (request: HttpRequest<A>) -> Either<
  * @param {HttpResult} result
  * @returns The updated {@link HttpResult}
  */
-typealias HttpResultHandler<A, B, C> = suspend (result: HttpResult<A, B>) -> Either<Exception, HttpResult<A, C>>
+typealias HttpResultHandler<A, B, C> = suspend (result: HttpResult<A, B>) -> Either<SdkError, HttpResult<A, C>>
 
 /**
  * Handles a {@link HttpResponse}
@@ -82,4 +82,4 @@ typealias HttpResultHandler<A, B, C> = suspend (result: HttpResult<A, B>) -> Eit
  * @param {HttpResponse} response
  * @returns {Async} The updated {@link HttpResponse}
  */
-typealias HttpResponseHandler<A, B> = suspend (response: HttpResponse<A>) -> Either<Exception, HttpResponse<B>>
+typealias HttpResponseHandler<A, B> = suspend (response: HttpResponse<A>) -> Either<SdkError, HttpResponse<B>>

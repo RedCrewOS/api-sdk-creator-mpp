@@ -47,12 +47,12 @@ val unmarshaller = gsonUnmarshaller(gson)
  * consequence of using a statically typed language like Kotlin where we have to defer some parts of the pipeline to
  * when specific types are known, while still trying to use a single pipeline definition as much as possible.
  */
-suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Exception, HttpResult<*, UnstructuredData>> {
+suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<SdkError, HttpResult<*, UnstructuredData>> {
     /*
      * Create the function that will add default headers to every HTTP request.
      *
-     * If this results in an Either.Left(Exception), when the HTTP request is piped through the API definition the
-     * Exception would be returned.
+     * If this results in an Either.Left(SdkError), when the HTTP request is piped through the API definition the
+     * SdkError would be returned.
      *
      * Alternatively in an SDK, this type of factory would be invoked near SDK initialisation, which would give the
      * opportunity to fail fast and not even continue the rest of the SDK instantiation.
@@ -68,8 +68,8 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
      * The library specific pieces have been abstracted away behind function types allowing for injection of any
      * compatible function and thus any compatible library.
      *
-     * When the pipeline is run with a request, if any of these functions return an Either.Left(Exception), the overall
-     * result of the pipeline will be an Exception which SDK specific operations will need to pass back to client
+     * When the pipeline is run with a request, if any of these functions return an Either.Left(SdkError), the overall
+     * result of the pipeline will be an SdkError which SDK specific operations will need to pass back to client
      * applications, or handle internally.
      *
      * The use of the `pipeK` operator is used to pipe the result of each expression to the next expression in the
@@ -88,9 +88,9 @@ suspend fun apiClient(client: HttpClient): suspend (HttpRequest<*>) -> Either<Ex
  * `checkIp` takes a partial API client and a JSON Unmarshaller to compose the final API pipeline
  */
 suspend fun checkIp(
-    client: suspend (HttpRequest<*>) -> Either<Exception, HttpResult<*, UnstructuredData>>,
+    client: suspend (HttpRequest<*>) -> Either<SdkError, HttpResult<*, UnstructuredData>>,
     jsonUnmarshaller: GenericJsonResultHandler
-): Either<Exception, IpData> {
+): Either<SdkError, IpData> {
     /*
      * The operation specific components of the request.
      */
@@ -125,7 +125,7 @@ suspend fun checkIp(
      * We therefore convert the result to an Either.Left with an exception so that callers can handle the
      * violation appropriately. Because `leftIfNull` is lazy, it wont create the exception until it's needed.
      */
-    return result.map(::extractHttpBody).leftIfNull { IllegalStateException("Didn't get any JSON data") }
+    return result.map(::extractHttpBody).leftIfNull { SdkError(ILLEGAL_STATE_ERROR_TYPE, "Didn't get any JSON data") }
 }
 
 fun main() {
@@ -159,7 +159,7 @@ fun main() {
      * result to the user in an appropriate way.
      */
     result.fold(
-        { e -> throw e },
+        { e -> throw e.toException() },
         { data -> print(data) }
     )
 }

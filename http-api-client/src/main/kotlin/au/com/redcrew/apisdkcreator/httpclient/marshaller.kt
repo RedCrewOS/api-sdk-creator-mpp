@@ -6,11 +6,11 @@ import arrow.core.computations.option
 import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
 import kotlin.reflect.KClass
 
-typealias Marshaller = suspend (Any) -> Either<Exception, UnstructuredData>
-typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<Exception, T>
+typealias Marshaller = suspend (Any) -> Either<SdkError, UnstructuredData>
+typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<SdkError, T>
 typealias ResponseUnmarshaller<T> = suspend (HttpResponse<UnstructuredData>) ->
     Either<
-        Exception,
+        SdkError,
         Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
     >
 
@@ -34,9 +34,9 @@ private fun hasContentType(contentType: String, response: HttpResponse<*>): Bool
 
 private fun <T> unsupportedContentType(
     response: Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
-): Either<Exception, HttpResponse<T>> =
+): Either<SdkError, HttpResponse<T>> =
     // if we have a Left(HttpResponse<UnstructuredData>) then we need to convert that to an error.
-    response.mapLeft { IllegalStateException("Unrecognised content type '${it.headers["content-type"]}'") }
+    response.mapLeft { SdkError(UNMARSHALLING_ERROR_TYPE, "Unrecognised content type '${it.headers["content-type"]}'") }
 
 /**
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
@@ -102,7 +102,7 @@ fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedRespo
 fun <T> unmarshaller(vararg unmarshallers: ResponseUnmarshaller<T>): HttpResultHandler<*, UnstructuredData, T> =
     { result ->
         val response = result.response
-        val initial: Either<Exception, Either<HttpResponse<UnstructuredData>, HttpResponse<T>>> =
+        val initial: Either<SdkError, Either<HttpResponse<UnstructuredData>, HttpResponse<T>>> =
             Either.Right(Either.Left(response))
 
         /*
