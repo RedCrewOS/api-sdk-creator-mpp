@@ -1,8 +1,6 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.Either
-import arrow.core.None
-import arrow.core.Option
 import arrow.core.left
 import kotlin.reflect.KClass
 
@@ -18,17 +16,15 @@ sealed class UnstructuredData {
 abstract class UnstructuredDataToGenericTypeUnmarshaller : GenericTypeUnmarshaller {
     override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> {
         return { data: UnstructuredData ->
-            val result = when (data) {
-                is UnstructuredData.String -> Option(unmarshallString(p1, data.data))
-                else -> None
-            }
+            @Suppress("REDUNDANT_ELSE_IN_WHEN")
+            when (data) {
+                is UnstructuredData.String -> unmarshallString(p1, data.data)
 
-            result.fold(
-                { SdkError(ILLEGAL_STATE_ERROR_TYPE, "Unrecognised unstructured data type").left() },
-                { Either.Right(it) }
-            )
+                // future proofing
+                else -> SdkError(ILLEGAL_STATE_ERROR_TYPE, "Unrecognised unstructured data type").left()
+            }
         }
     }
 
-    abstract fun <T : Any> unmarshallString(cls: KClass<T>, data: String): T
+    abstract fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T>
 }

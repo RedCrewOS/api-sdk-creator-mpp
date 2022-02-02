@@ -5,6 +5,9 @@ import au.com.redcrew.apisdkcreator.httpclient.*
 import com.google.gson.Gson
 import kotlin.reflect.KClass
 
+private fun toUnmashallingError(message: String?, cause: Any): SdkError =
+    SdkError(UNMARSHALLING_ERROR_TYPE, message ?: "", cause)
+
 // gsonMarshaller :: Gson -> Marshaller
 fun gsonMarshaller(gson: Gson): Marshaller = {
     try {
@@ -19,6 +22,9 @@ fun gsonMarshaller(gson: Gson): Marshaller = {
 // gsonUnmarshaller :: Gson -> KClass<T> -> Unmarshaller<T>
 fun gsonUnmarshaller(gson: Gson): GenericTypeUnmarshaller =
     object : UnstructuredDataToGenericTypeUnmarshaller() {
-        override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): T =
-            gson.fromJson(data, cls.java)
+        override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
+            Either.catch(
+                { toUnmashallingError(it.message, it) },
+                { gson.fromJson(data, cls.java) }
+            )
     }

@@ -1,6 +1,9 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
+import arrow.core.Either
 import arrow.core.identity
+import arrow.core.left
+import arrow.core.right
 import au.com.redcrew.apisdkcreator.test.CoroutineExtension
 import au.com.redcrew.apisdkcreator.test.throwException
 import com.natpryce.hamkrest.assertion.assertThat
@@ -13,7 +16,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.reflect.KClass
-import kotlin.test.Ignore
 
 @ExperimentalCoroutinesApi
 @ExtendWith(CoroutineExtension::class)
@@ -26,7 +28,8 @@ class UnstructuredDataTest(val dispatcher: TestCoroutineDispatcher) {
         fun `should return result of unmarshalling`() = dispatcher.runBlockingTest {
               val unmarshaller = object : UnstructuredDataToGenericTypeUnmarshaller() {
                 @Suppress("UNCHECKED_CAST")
-                override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): T  = Integer.parseInt(data) as T
+                override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
+                    Integer.parseInt(data).right() as Either<SdkError, T>
             }
 
             val result = unmarshaller(Int::class)(UnstructuredData.String("1234")).fold(::throwException, ::identity)
@@ -34,15 +37,13 @@ class UnstructuredDataTest(val dispatcher: TestCoroutineDispatcher) {
             assertThat(result, equalTo(1234))
         }
 
-        @Ignore
         @Test
         fun `should return error when unmarshalling fails`() = dispatcher.runBlockingTest {
-            val error = Exception("Something went wrong")
+            val error = SdkError("fake-error", "Something went wrong")
 
             val unmarshaller = object : UnstructuredDataToGenericTypeUnmarshaller() {
-                override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): T {
-                    throw error
-                }
+                override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
+                    error.left()
             }
 
             val result = unmarshaller(Int::class)(UnstructuredData.String("1234")).fold(::identity, ::throwException)

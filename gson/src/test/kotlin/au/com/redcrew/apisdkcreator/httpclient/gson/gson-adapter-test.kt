@@ -16,7 +16,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.Ignore
 
 data class MyType(
     val x: Int,
@@ -54,7 +53,6 @@ class GsonAdapterTest(val dispatcher: TestCoroutineDispatcher) {
             assertThat(result, equalTo(obj))
         }
 
-        @Ignore
         @Test
         fun `should catch error deserialising object`() = dispatcher.runBlockingTest {
             val result = unmarshaller(UnstructuredData.String("{")).fold(::identity, ::throwException)
