@@ -1,71 +1,63 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
-import arrow.core.identity
-import au.com.redcrew.apisdkcreator.test.throwException
-import au.com.redcrew.apisdkcreator.test.throwSdkError
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
-@DisplayName("Base Http Client")
-class BaseHttpClientTest {
-    @Nested
-    @DisplayName("path params")
-    inner class PathParamsTest {
-        @Test
-        fun `should throw error if value for param not found`() {
-            val result = replacePathParams("customer/:id/account/:accountNumber", emptyMap()).fold(::identity, ::throwException)
+class BaseHttpClientTest : DescribeSpec({
+    describe("Base Http Client") {
+        describe("path params") {
+            it("should return error if value for param not found") {
+                val result = replacePathParams("customer/:id/account/:accountNumber", emptyMap())
+                val error = result.shouldBeLeft()
 
-            assertThat(result.type, equalTo(ILLEGAL_ARGUMENT_ERROR_TYPE))
+                error.type.shouldBe(ILLEGAL_ARGUMENT_ERROR_TYPE)
+            }
+
+            it("should replace slugs in path") {
+                val result = replacePathParams(
+                    "customer/:id/account/:accountNumber", mapOf(
+                        "id" to "123",
+                        "accountNumber" to "456"
+                    )
+                )
+
+                result.shouldBeRight("customer/123/account/456")
+            }
         }
 
-        @Test
-        fun `should replace slugs in path`() {
-            val path = replacePathParams("customer/:id/account/:accountNumber", mapOf(
-                "id" to "123",
-                "accountNumber" to "456"
-            )).fold(::throwSdkError, ::identity)
+        describe("query params") {
+            it("should create query string") {
+                val queryParams = mapOf(
+                    "a" to "1",
+                    "x" to "foo"
+                )
 
-            assertThat(path, equalTo("customer/123/account/456"))
-        }
-    }
+                val qs = createQueryString(queryParams)
 
-    @Nested
-    @DisplayName("query params")
-    inner class QueryParamsTest {
-        @Test
-        fun `should create query string`() {
-            val queryParams = mapOf(
-                "a" to "1",
-                "x" to "foo"
-            )
+                // we can't guarantee the order of the parts of the query string.
+                qs.shouldContain("&")
+                qs.shouldContain("a=1")
+                qs.shouldContain("x=foo")
+            }
 
-            val qs = createQueryString(queryParams)
+            it("should urlencode query parameters") {
+                val queryParams = mapOf(
+                    "callback" to "http://localhost:5000"
+                )
 
-            // we can't guarantee the order of the parts of the query string.
-            assertThat(qs.contains("&"), equalTo(true))
-            assertThat(qs.contains("a=1"), equalTo(true))
-            assertThat(qs.contains("x=foo"), equalTo(true))
-        }
+                val qs = createQueryString(queryParams)
 
-        @Test
-        fun `should urlencode query parameters`() {
-            val queryParams = mapOf(
-                "callback" to "http://localhost:5000"
-            )
+                qs.shouldBe("?callback=http%3A%2F%2Flocalhost%3A5000")
+            }
 
-            val qs = createQueryString(queryParams)
+            it("should return empty string when no params") {
+                val qs = createQueryString(emptyMap())
 
-            assertThat(qs, equalTo("?callback=http%3A%2F%2Flocalhost%3A5000"))
-        }
-
-        @Test
-        fun `should return empty string when no params`() {
-            val qs = createQueryString(emptyMap())
-
-            assertThat(qs, equalTo(""))
+                qs.shouldBe("")
+            }
         }
     }
-}
+})

@@ -1,63 +1,42 @@
 package au.com.redcrew.apisdkcreator.httpclient.gson
 
-import arrow.core.identity
 import au.com.redcrew.apisdkcreator.httpclient.UNMARSHALLING_ERROR_TYPE
 import au.com.redcrew.apisdkcreator.httpclient.UnstructuredData
-import au.com.redcrew.apisdkcreator.test.CoroutineExtension
-import au.com.redcrew.apisdkcreator.test.throwException
-import au.com.redcrew.apisdkcreator.test.throwSdkError
 import com.google.gson.Gson
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 
 data class MyType(
     val x: Int,
     val y: List<String>
 )
 
-@ExperimentalCoroutinesApi
-@ExtendWith(CoroutineExtension::class)
-@DisplayName("Gson adapter")
-class GsonAdapterTest(val dispatcher: TestCoroutineDispatcher) {
-    private val gson = Gson()
-    private val obj = MyType(1, listOf("a", "b", "c"))
-    private val json = "{\"x\":1,\"y\":[\"a\",\"b\",\"c\"]}"
+class GsonAdapterTest: DescribeSpec({
+    describe("Gson adapter") {
+        val gson = Gson()
+        val obj = MyType(1, listOf("a", "b", "c"))
+        val json = "{\"x\":1,\"y\":[\"a\",\"b\",\"c\"]}"
 
-    @Nested
-    @DisplayName("marshalling")
-    inner class MarshallerTest {
-        @Test
-        fun `should marshall any object`() = dispatcher.runBlockingTest {
-            val result = gsonMarshaller(gson)(obj).fold(::throwSdkError, ::identity)
+        describe("marshalling") {
+            it("should marshall any object") {
+                gsonMarshaller(gson)(obj).shouldBeRight(UnstructuredData.String(json))
+            }
+        }
 
-            assertThat(result, equalTo(UnstructuredData.String(json)))
+        describe("unmarshalling") {
+            val unmarshaller = gsonUnmarshaller(gson)(MyType::class)
+
+            it("should deserialise any object") {
+                unmarshaller(UnstructuredData.String(json)).shouldBeRight(obj)
+            }
+
+            it("should catch error deserialising object") {
+                val result = unmarshaller(UnstructuredData.String("{")).shouldBeLeft()
+
+                result.type.shouldBe(UNMARSHALLING_ERROR_TYPE)
+            }
         }
     }
-
-    @Nested
-    @DisplayName("unmarhsalling")
-    inner class UnmarshallerTest {
-        private val unmarshaller = gsonUnmarshaller(gson)(MyType::class)
-
-        @Test
-        fun `should deserialise any object`() = dispatcher.runBlockingTest {
-            val result: MyType = unmarshaller(UnstructuredData.String(json)).fold(::throwSdkError, ::identity)
-
-            assertThat(result, equalTo(obj))
-        }
-
-        @Test
-        fun `should catch error deserialising object`() = dispatcher.runBlockingTest {
-            val result = unmarshaller(UnstructuredData.String("{")).fold(::identity, ::throwException)
-
-            assertThat(result.type, equalTo(UNMARSHALLING_ERROR_TYPE))
-        }
-    }
-}
+})

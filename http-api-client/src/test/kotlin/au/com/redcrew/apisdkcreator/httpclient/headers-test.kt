@@ -1,66 +1,46 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.Either
-import arrow.core.identity
-import au.com.redcrew.apisdkcreator.test.CoroutineExtension
-import au.com.redcrew.apisdkcreator.test.throwSdkError
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 
-@ExperimentalCoroutinesApi
-@ExtendWith(CoroutineExtension::class)
-@DisplayName("Headers")
-class HeadersTest(val dispatcher: TestCoroutineDispatcher) {
-    @Nested
-    @DisplayName("header factory")
-    inner class HeaderFactoryTest {
-        private val factoryOne: RequestHeaderFactory = { Either.Right(mapOf("x-application-name" to "project")) }
-        private val factoryTwo: RequestHeaderFactory = { Either.Right(mapOf("x-api-key" to "abc123")) }
+class HeadersTest : DescribeSpec({
+    describe("Headers") {
+       describe("header factory") {
+            val factoryOne: RequestHeaderFactory = { Either.Right(mapOf("x-application-name" to "project")) }
+            val factoryTwo: RequestHeaderFactory = { Either.Right(mapOf("x-api-key" to "abc123")) }
 
-        @Test
-        fun `should create request headers from List`() = dispatcher.runBlockingTest{
-            val factory: RequestHeadersFactory = createHeaders(factoryOne, factoryTwo)
-            val headers: HttpHeaders = factory().fold(::throwSdkError, ::identity)
+            it("should create request headers from List") {
+                val factory: RequestHeadersFactory = createHeaders(factoryOne, factoryTwo)
+                val headers: HttpHeaders = factory().shouldBeRight()
 
-            assertThat(headers["x-application-name"], equalTo("project"))
-            assertThat(headers["x-api-key"], equalTo("abc123"))
+                headers["x-application-name"].shouldBe("project")
+                headers["x-api-key"].shouldBe("abc123")
+            }
+        }
+
+        describe("bearer token factory") {
+            it("should create authorization header") {
+                val token = "abc123"
+                val result = bearerToken { Either.Right(token) }(emptyMap()).shouldBeRight()
+
+                result["authorization"].shouldBe("Bearer $token")
+            }
+        }
+
+        describe("constant headers factory") {
+            it("should return provided headers") {
+                val headers = mapOf(
+                    "x-application-name" to "project",
+                    "x-api-key" to "abc123"
+                )
+
+                val result = constantHeaders(headers)(emptyMap()).shouldBeRight()
+
+                result["x-application-name"].shouldBe("project")
+                result["x-api-key"].shouldBe("abc123")
+            }
         }
     }
-
-    @Nested
-    @DisplayName("bearer token factory")
-    inner class BearerTokenFactoryTest {
-        @Test
-        fun `should create authorization header`() = dispatcher.runBlockingTest {
-            val token = "abc123"
-
-            val result = bearerToken { Either.Right(token) }(emptyMap()).fold(::throwSdkError, ::identity)
-
-            assertThat(result["authorization"], equalTo("Bearer $token"))
-        }
-    }
-
-    @Nested
-    @DisplayName("constant headers factory")
-    inner class ConstantHeadersFactoryTest {
-        @Test
-        fun `should return provided headers`() = dispatcher.runBlockingTest {
-            val headers = mapOf(
-                "x-application-name" to "project",
-                "x-api-key" to "abc123"
-            )
-
-            val result = constantHeaders(headers)(emptyMap()).fold(::throwSdkError, ::identity)
-
-            assertThat(result["x-application-name"], equalTo("project"))
-            assertThat(result["x-api-key"], equalTo("abc123"))
-        }
-    }
-}
+})

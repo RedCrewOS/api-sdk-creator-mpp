@@ -1,60 +1,52 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
-import arrow.core.*
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
-import au.com.redcrew.apisdkcreator.test.throwException
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeNone
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldBeSome
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 
-@DisplayName("accessors")
-class AccessorsTest {
-    @Test
-    fun `should extract response body from result`() {
-        val body = mapOf<Any, Any>("a" to 1, "x" to "foo" )
+class AccessorsTest : DescribeSpec({
+    describe("accessors") {
+        fun givenHttpResult(body: Any): HttpResult<Any, Any> {
+            return HttpResult(
+                aHttpRequest<Any>().build(),
+                aHttpResponse<Any>().withBody(body).build()
+            )
+        }
 
-        val result = extractHttpBody(givenHttpResult(body))
+        it("should extract response body from result") {
+            val body = mapOf<Any, Any>("a" to 1, "x" to "foo")
 
-        assertThat(result, equalTo(body))
-    }
+            val result = extractHttpBody(givenHttpResult(body))
 
-    @Nested
-    @DisplayName("header parsing")
-    inner class HeaderParsingTest {
-        @Nested
-        @DisplayName("int headers")
-        inner class IntHeadersParsingTest {
-            @Test
-            fun `should return nothing if header not present`() {
-                val result = parseIntHeader("x-header", emptyMap()).merge()
+            result.shouldBe(body)
+        }
 
-                assertThat("Option.None not returned", none<Int>() == result, equalTo(true))
-            }
+        describe("header parsing") {
+            describe("int headers") {
+                it("should return nothing if header not present") {
+                    val result = parseIntHeader("x-header", emptyMap())
 
-            @Test
-            fun `should return error if header value not a number`() {
-                val result = parseIntHeader("x-header", mapOf("x-header" to "abc")).fold(::identity, ::throwException)
+                    result.shouldBeRight().shouldBeNone()
+                }
 
-                assertThat(result.type, equalTo(INVALID_NUMBER_ERROR_TYPE))
-            }
+                it("should return error if header value not a number") {
+                    val result = parseIntHeader("x-header", mapOf("x-header" to "abc"))
+                    val error = result.shouldBeLeft()
 
-            @Test
-            fun `should parse int header`() {
-                val result = parseIntHeader("x-header", mapOf("x-header" to "123")).merge()
+                    error.type.shouldBe(INVALID_NUMBER_ERROR_TYPE)
+                }
 
-                assertThat("Option not returned", result is Option<*>, equalTo(true))
-                assertThat((result as Option<*>).getOrElse { -1 }, equalTo(123))
+                it("should parse int header") {
+                    val result = parseIntHeader("x-header", mapOf("x-header" to "123"))
+
+                    result.shouldBeRight().shouldBeSome().shouldBe(123)
+                }
             }
         }
     }
-
-    private fun givenHttpResult(body: Any): HttpResult<Any, Any> {
-        return HttpResult(
-            aHttpRequest<Any>().build(),
-            aHttpResponse<Any>().withBody(body).build()
-        )
-    }
-}
+})

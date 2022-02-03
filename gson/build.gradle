@@ -7,6 +7,4 @@ version "0.1-SNAPSHOT"
 dependencies {
     api project(":http-api-client")
     api "com.google.code.gson:gson:2.8.9"
-
-    testImplementation project(":test")
 }

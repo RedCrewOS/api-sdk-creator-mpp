@@ -1,366 +1,349 @@
 package au.com.redcrew.apisdkcreator.httpclient.okhttp
 
-import arrow.core.identity
 import au.com.redcrew.apisdkcreator.httpclient.*
-import au.com.redcrew.apisdkcreator.test.FunctionSource
-import au.com.redcrew.apisdkcreator.test.throwException
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.containsSubstring
-import com.natpryce.hamkrest.equalTo
-import com.natpryce.hamkrest.greaterThanOrEqualTo
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.maps.shouldContainAll
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.jupiter.api.*
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import java.util.stream.Stream
 
-@Suppress("BlockingMethodInNonBlockingContext")
-@ExperimentalCoroutinesApi
-@DisplayName("OkHttp HttpClient")
-class OkHttpHttpClientTest {
-    companion object {
-        fun methods(): Stream<Arguments> =
-            HttpRequestMethod.values().map { Arguments.of(it) }.stream()
-    }
+/*
+ * Note: describe() blocks can't have the same name, otherwise the `beforeEach` blocks will attach to every describe
+ * block and execute, which will cause erroneous outcomes for the test by modifying the MockWebServer state for
+ * unrelated scenarios.
+ */
+@Suppress("NAME_SHADOWING")
+class OkHttpHttpClientTest : DescribeSpec({
+    describe("OkHttp HttpClient") {
+        lateinit var mockWebServer: MockWebServer
+        lateinit var url: String
+        lateinit var request: HttpRequest<UnstructuredData>
 
-    private lateinit var mockWebServer: MockWebServer
-    private lateinit var url: String
-    private lateinit var request: HttpRequest<UnstructuredData>
-
-    @BeforeEach
-    fun beforeEach() {
-        /*
-         * When shutting down the server, the "is started" flag isn't cleared, so the server can't be reused.
-         */
-        mockWebServer = MockWebServer()
-        mockWebServer.start()
-
-        url = "http://127.0.0.1:${mockWebServer.port}"
-
-        request = HttpRequest(
-            method = HttpRequestMethod.GET,
-            url = HttpRequestUrl.String(url),
-            headers = emptyMap(),
-            pathParams = emptyMap(),
-            queryParams = emptyMap(),
-            body = null
-        )
-    }
-
-    @AfterEach
-    fun afterEach() {
-        mockWebServer.shutdown()
-    }
-
-    @Nested
-    @DisplayName("request")
-    inner class RequestTest {
-        @Nested
-        @DisplayName("method")
-        inner class MethodTest {
-            @ParameterizedTest(name = "should use {0} method")
-            @FunctionSource("methods")
-            fun `should set method`(method: HttpRequestMethod) = runBlocking {
-                val request = request.copy(
-                    headers = request.headers + mapOf("content-type" to "text/plain"),
-                    body = UnstructuredData.String("Hello World")
-                )
-
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-
-                okHttpClient()(request.copy(method = method))
-
-                val result = recordedRequest()
-
-                assertThat(result != null, equalTo(true))
-                assertThat(result?.method, equalTo(method.toString()))
-            }
-        }
-
-        @Nested
-        @DisplayName("url")
-        inner class UrlTest {
-            @BeforeEach
-            fun beforeEach() {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-            }
-
-            @Test
-            fun `should use URL from URL`() = runBlocking {
-                val request = request.copy(url = HttpRequestUrl.URL(URL(this@OkHttpHttpClientTest.url)))
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result != null, equalTo(true))
-            }
-
-            @Test
-            fun `should use URL from string`() = runBlocking {
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result != null, equalTo(true))
-            }
-        }
-
-        @Nested
-        @DisplayName("headers")
-        inner class HeadersTest {
-            @BeforeEach
-            fun beforeEach() {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-            }
-
-            @Test
-            fun `should copy headers`() = runBlocking {
-                val name = "x-header-name"
-                val value = "value"
-                val request = request.copy(headers = request.headers + mapOf(name to value))
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result?.headers!!.size, greaterThanOrEqualTo(2))
-                assertThat(result.headers[name], equalTo(value))
-            }
-
-            @Test
-            fun `should filter out content type header when no body`() = runBlocking {
-                val request = request.copy(body = null)
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result?.headers?.get("content-type"), equalTo(null))
-            }
-        }
-
-        @Nested
-        @DisplayName("path params")
-        inner class PathParamsTest {
-            private lateinit var url: String
-
-            @BeforeEach
-            fun beforeEach() {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-
-                url = this@OkHttpHttpClientTest.url + "/:id"
-            }
-
-            @Test
-            fun `should replace slugs with values`() = runBlocking {
-                val request = request.copy(url = HttpRequestUrl.String(url), pathParams = mapOf("id" to "123"))
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result?.path!!, containsSubstring("/123"))
-            }
-
-            @Test
-            fun `should return error if no value for slug`() = runBlocking {
-                val request = request.copy(url = HttpRequestUrl.String(url), pathParams = null)
-
-                val result = okHttpClient()(request).fold(::identity, ::throwException)
-
-                assertThat(result.type, equalTo(ILLEGAL_ARGUMENT_ERROR_TYPE))
-            }
-        }
-
-        @Nested
-        @DisplayName("query params")
-        inner class QueryParamsTest {
-            @BeforeEach
-            fun beforeEach() {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-
-                request = request.copy(queryParams = mapOf("type" to "xml"))
-            }
-
-            @Test
-            fun `should append query parameters`() = runBlocking {
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-
-                assertThat(result?.requestUrl?.query, equalTo("type=xml"))
-            }
-        }
-
-        @Nested
-        @DisplayName("body")
-        inner class BodyTest {
-            @BeforeEach
-            fun beforeEach() {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-
-                request = request.copy(
-                    method = HttpRequestMethod.POST,
-                    headers = request.headers + mapOf("content-type" to "text/plain"),
-                    body = UnstructuredData.String("Hello World")
-                )
-            }
-
-            @Test
-            fun `should write string into request`()  = runBlocking {
-                val body = "This is some data"
-                val request = request.copy(body = UnstructuredData.String(body))
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-                assertThat(result?.body?.readUtf8(), equalTo(body))
-            }
-
-            @Test
-            fun `should return error if body present but no content type`() = runBlocking {
-                val request = request.copy(headers = emptyMap())
-
-                val result = okHttpClient()(request).fold(::identity, ::throwException)
-
-                assertThat(result.message, equalTo("Missing content-type"))
-            }
-
-            @Test
-            fun `should ignore body when body should not be sent`() = runBlocking {
-                val request = request.copy(method = HttpRequestMethod.GET)
-
-                okHttpClient()(request)
-
-                val result = recordedRequest()
-                assertThat(result?.body?.size, equalTo(0))
-            }
-        }
-    }
-
-    @Nested
-    @DisplayName("response")
-    inner class ResponseTest {
-        @Nested
-        @DisplayName("errors")
-        inner class ErrorsTest {
-            @Test
-            fun `should return error when non HTTP error occurs`() = runBlocking {
-                val request = request.copy(url = HttpRequestUrl.String("http://127.0.0.1:8080"))
-
-                okHttpClient()(request).fold(::identity, ::throwException)
-
-                Unit
-            }
-        }
-
-        @Nested
-        @DisplayName("status")
-        inner class StatusTest {
-            @Test
-            fun `should return success status code`() = runBlocking{
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
-
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
-
-                assertThat(result.response.statusCode, equalTo(200))
-            }
-
+        beforeEach {
             /*
-             * HttpClient libraries often treat errors differently from success eg: throw rather than return.
+             * When shutting down the server, the "is started" flag isn't cleared, so the server can't be reused.
              */
-            @Test
-            fun `should return error status code`() = runBlocking {
-                mockWebServer.enqueue(MockResponse().setResponseCode(500))
+            mockWebServer = MockWebServer()
+            mockWebServer.start()
 
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
+            url = "http://127.0.0.1:${mockWebServer.port}"
 
-                assertThat(result.response.statusCode, equalTo(500))
+            request = HttpRequest(
+                method = HttpRequestMethod.GET,
+                url = HttpRequestUrl.String(url),
+                headers = emptyMap(),
+                pathParams = emptyMap(),
+                queryParams = emptyMap(),
+                body = null
+            )
+        }
+
+        afterEach {
+            mockWebServer.shutdown()
+        }
+
+        suspend fun sendRequest(
+            request: HttpRequest<UnstructuredData>,
+            expectedResponseStatusCode: Int = 200
+        ): HttpResponse<UnstructuredData> {
+            val response = okHttpClient()(request).shouldBeRight().response
+            response.statusCode.shouldBe(expectedResponseStatusCode)
+
+            return response
+        }
+
+        fun recordedRequest(): RecordedRequest? =
+            mockWebServer.takeRequest(2000L, TimeUnit.MILLISECONDS)
+
+        describe("request") {
+            describe("method") {
+                HttpRequestMethod.values().forEach { method ->
+                    it("should use $method method") {
+                        runBlocking {
+                            val request = request.copy(
+                                headers = request.headers + mapOf("content-type" to "text/plain"),
+                                body = UnstructuredData.String("Hello World")
+                            )
+
+                            mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+
+                            sendRequest(request.copy(method = method))
+
+                            // check the request was correct
+                            val result = recordedRequest()
+                            result.shouldNotBe(null)
+                            result?.method.shouldBe(method.toString())
+                        }
+                    }
+                }
             }
 
-            @Test
-            fun `should return status message`() = runBlocking {
-                mockWebServer.enqueue(MockResponse().setResponseCode(404))
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
+            describe("url") {
+                beforeEach {
+                    mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+                }
 
-                assertThat(result.response.statusMessage, equalTo("Client Error"))
+                it("should use URL from URL") {
+                    runBlocking {
+                        val request = request.copy(url = HttpRequestUrl.URL(URL(url)))
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result.shouldNotBe(null)
+                    }
+                }
+
+                it("should use URL from string") {
+                    runBlocking {
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result.shouldNotBe(null)
+                    }
+                }
+            }
+
+            describe("headers") {
+                beforeEach {
+                    mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+                }
+
+                it("should copy headers") {
+                    runBlocking {
+                        val name = "x-header-name"
+                        val value = "value"
+                        val request = request.copy(headers = request.headers + mapOf(name to value))
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result?.shouldNotBe(null)
+                        result?.headers!!.size.shouldBeGreaterThanOrEqual(2)
+                        result.headers[name].shouldBe(value)
+                    }
+                }
+
+                it("should filter out content type header when no body") {
+                    runBlocking {
+                        val request = request.copy(body = null)
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result!!.headers["content-type"].shouldBe(null)
+                    }
+                }
+            }
+
+            describe("path params") {
+                lateinit var urlWithPath: String
+
+                beforeEach {
+                    mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+
+                    urlWithPath = "$url/:id"
+                }
+
+                it("should replace slugs with values") {
+                    runBlocking {
+                        val request = request.copy(url = HttpRequestUrl.String(urlWithPath), pathParams = mapOf("id" to "123"))
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result?.path!!.shouldContain("/123")
+                    }
+                }
+
+                it("should return error if no value for slug") {
+                    runBlocking {
+                        val request = request.copy(url = HttpRequestUrl.String(urlWithPath), pathParams = null)
+
+                        val result = okHttpClient()(request).shouldBeLeft()
+                        result.type.shouldBe(ILLEGAL_ARGUMENT_ERROR_TYPE)
+                    }
+                }
+            }
+
+            describe("query params") {
+                beforeEach {
+                    mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+
+                    request = request.copy(queryParams = mapOf("type" to "xml"))
+                }
+
+                it("should append query parameters") {
+                    runBlocking {
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result?.requestUrl?.query.shouldBe("type=xml")
+                    }
+                }
+            }
+
+            describe("request body") {
+                beforeEach {
+                    mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
+
+                    request = request.copy(
+                        method = HttpRequestMethod.POST,
+                        headers = request.headers + mapOf("content-type" to "text/plain"),
+                        body = UnstructuredData.String("Hello World")
+                    )
+                }
+
+                it("should write string into request") {
+                    runBlocking {
+                        val body = "This is some data"
+                        val request = request.copy(body = UnstructuredData.String(body))
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result?.body?.readUtf8().shouldBe(body)
+                    }
+                }
+
+                it("should return error if body present but no content type") {
+                    runBlocking {
+                        val request = request.copy(headers = emptyMap())
+
+                        val result = okHttpClient()(request).shouldBeLeft()
+                        result.message.shouldBe("Missing content-type")
+                    }
+                }
+
+                it("should ignore body when body should not be sent") {
+                    runBlocking {
+                        val request = request.copy(method = HttpRequestMethod.GET)
+
+                        sendRequest(request)
+
+                        val result = recordedRequest()
+                        result?.body?.size.shouldBe(0)
+                    }
+                }
             }
         }
 
-        @Nested
-        @DisplayName("headers")
-        inner class HeadersTest {
-            @Test
-            fun `should return headers`() = runBlocking {
-                val headers = mapOf(
-                    "x-my-header" to "value",
-                    "x-my-other-header" to "other value",
+        describe("response") {
+            describe("errors") {
+                it("should return error when non HTTP error occurs") {
+                    runBlocking {
+                        val request = request.copy(url = HttpRequestUrl.String("http://127.0.0.1:8080"))
 
-                    // MockWebserver puts this in automatically
-                    "content-length" to "0"
-                )
+                        okHttpClient()(request).shouldBeLeft()
 
-                mockWebServer.enqueue(MockResponse()
-                    .setResponseCode(200)
-                    .setHeaders(headers.toHeaders())
-                    .setBody("")
-                )
-
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
-
-                assertThat(result.response.headers, equalTo(headers))
+                        Unit
+                    }
+                }
             }
 
-            @Test
-            fun `should lowercase all headers`() = runBlocking {
-                val headers = mapOf("x-MY-Header" to "value")
+            describe("status") {
+                it("should return success status code") {
+                    runBlocking {
+                        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(""))
 
-                mockWebServer.enqueue(MockResponse()
-                    .setResponseCode(200)
-                    .setHeaders(headers.toHeaders())
-                    .setBody("")
-                )
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.statusCode.shouldBe(200)
+                    }
+                }
 
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
+                /*
+                 * HttpClient libraries often treat errors differently from success eg: throw rather than return.
+                 */
+                it("should return error status code") {
+                    runBlocking {
+                        mockWebServer.enqueue(MockResponse().setResponseCode(500))
 
-                assertThat(result.response.headers["x-my-header"], equalTo("value"))
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.statusCode.shouldBe(500)
+                    }
+                }
+
+                it("should return status message") {
+                    runBlocking {
+                        mockWebServer.enqueue(MockResponse().setResponseCode(404))
+
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.statusMessage.shouldBe("Client Error")
+                    }
+                }
             }
-        }
 
-        @Nested
-        @DisplayName("body")
-        inner class BodyTest {
-            @Test
-            fun `should return string`() = runBlocking {
-                val body = "This is some data"
+            describe("response headers") {
+                it("should return headers") {
+                    runBlocking {
+                        val headers = mapOf(
+                            "x-my-header" to "value",
+                            "x-my-other-header" to "other value",
 
-                mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
+                            // MockWebserver puts this in automatically
+                            "content-length" to "0"
+                        )
 
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
+                        mockWebServer.enqueue(
+                            MockResponse()
+                                .setResponseCode(200)
+                                .setHeaders(headers.toHeaders())
+                                .setBody("")
+                        )
 
-                assertThat(result.response.body, equalTo(UnstructuredData.String(body)))
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.headers.shouldContainAll(headers)
+                    }
+                }
+
+                it("should lowercase all headers") {
+                    runBlocking {
+                        val headers = mapOf("x-MY-Header" to "value")
+
+                        mockWebServer.enqueue(
+                            MockResponse()
+                                .setResponseCode(200)
+                                .setHeaders(headers.toHeaders())
+                                .setBody("")
+                        )
+
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.headers["x-my-header"].shouldBe("value")
+                    }
+                }
             }
 
-            @Test
-            fun `should return null when no content returned from server`() = runBlocking {
-                mockWebServer.enqueue(MockResponse().setResponseCode(200))
+            describe("response body") {
+                it("should return string") {
+                    runBlocking {
+                        val body = "This is some data"
 
-                val result = okHttpClient()(request).fold(::throwException, ::identity) as HttpResult<*, *>
+                        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
-                assertThat(result.response.body, equalTo(null))
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.body.shouldBe(UnstructuredData.String(body))
+                    }
+                }
+
+                it("should return null when no content returned from server") {
+                    runBlocking {
+                        mockWebServer.enqueue(MockResponse().setResponseCode(200))
+
+                        val result = okHttpClient()(request).shouldBeRight()
+                        result.response.body.shouldBe(null)
+                    }
+                }
             }
         }
     }
-
-    fun recordedRequest(): RecordedRequest? {
-        return mockWebServer.takeRequest(2000L, TimeUnit.MILLISECONDS)
-    }
-}
+})

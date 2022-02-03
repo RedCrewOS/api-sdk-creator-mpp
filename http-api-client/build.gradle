@@ -9,6 +9,4 @@ dependencies {
 
     api "io.arrow-kt:arrow-core"
     api "io.arrow-kt:arrow-fx-coroutines"
-
-    testImplementation project(":test")
 }

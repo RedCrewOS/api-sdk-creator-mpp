@@ -2,60 +2,52 @@ package au.com.redcrew.apisdkcreator.httpclient
 
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpResponse
-import au.com.redcrew.apisdkcreator.test.FunctionSource
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import java.util.stream.Stream
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 
 data class TestData(
     val code: Int,
     val successful: Boolean
 )
 
-@DisplayName("predicates")
-class PredicatesTest {
-    companion object {
-        fun data(): Stream<Arguments> =
-            Stream.of(
-                Arguments.of(199, false, "unsuccessful"),
-                Arguments.of(200, true, "successful"),
-                Arguments.of(299, true, "successful"),
-                Arguments.of(300, false, "unsuccessful"),
-            )
+private fun successToString(successful: Boolean): String =
+    when(successful) {
+        true -> "successful"
+        false -> "unsuccessful"
     }
 
-    @Nested
-    @DisplayName("is successful")
-    inner class SuccessfulTests {
-        @Nested
-        @DisplayName("successful response")
-        inner class SuccessfulResponseTests {
-            @ParameterizedTest(name = "should determine that {0} is {2}")
-            @FunctionSource("data")
-            fun checkSuccessfulResponseGenerator(code: Int, successful: Boolean, successOrNot: String) {
-                val response = aHttpResponse<Any>().withStatusCode(code).build()
+class PredicatesTest : DescribeSpec({
+    val data = listOf(
+        TestData(199, false),
+        TestData(200, true),
+        TestData(299, true),
+        TestData(300, false)
+    )
 
-                assertThat(isSuccessfulResponse(response), equalTo(successful))
+    describe("predicates") {
+        describe("is successful") {
+            describe("successful response") {
+                data.forEach { item ->
+                    it("should determine that ${item.code} is ${successToString(item.successful)}") {
+                        val response = aHttpResponse<Any>().withStatusCode(item.code).build()
+
+                        isSuccessfulResponse(response).shouldBe(item.successful)
+                    }
+                }
             }
-        }
 
-        @Nested
-        @DisplayName("successful result")
-        inner class SuccessfulResultTests {
-            @ParameterizedTest(name = "should determine that {0} is {2}")
-            @FunctionSource("data")
-            fun checkSuccessfulResultGenerator(code: Int, successful: Boolean, successOrNot: String) {
-                val result = HttpResult(
-                    aHttpRequest<Any>().build(),
-                    aHttpResponse<Any>().withStatusCode(code).build()
-                )
+            describe("successful result") {
+                data.forEach { pair ->
+                    it("should determine that ${pair.code} is ${successToString(pair.successful)}") {
+                        val result = HttpResult(
+                            aHttpRequest<Any>().build(),
+                            aHttpResponse<Any>().withStatusCode(pair.code).build()
+                        )
 
-                assertThat(isSuccessfulResult(result), equalTo(successful))
+                        isSuccessfulResult(result).shouldBe(pair.successful)
+                    }
+                }
             }
         }
     }
-}
+})
