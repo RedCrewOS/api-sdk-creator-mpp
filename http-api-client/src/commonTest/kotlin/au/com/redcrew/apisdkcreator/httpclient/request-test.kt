@@ -9,7 +9,6 @@ import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import java.net.URL
 
 class RequestTest : DescribeSpec({
     describe("Http Request") {
@@ -44,15 +43,6 @@ class RequestTest : DescribeSpec({
                 val result = resolveUrl(base)(request).shouldBeRight()
 
                 result.url.shouldBe(HttpRequestUrl.String("${base}${path}"))
-            }
-
-            it("should return error if trying to resolve an absolute url") {
-                val url = URL("http://localhost")
-                val request = aHttpRequest<Any>().withUrl(HttpRequestUrl.URL(url)).build()
-
-                val result = resolveUrl(base)(request).shouldBeLeft()
-
-                result.type.shouldBe(ILLEGAL_STATE_ERROR_TYPE)
             }
         }
 

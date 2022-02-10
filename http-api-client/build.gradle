@@ -1,12 +1,66 @@
 plugins {
-    id "apisdkcreator.configuration"
+    id "org.jetbrains.kotlin.multiplatform"
+    id "io.kotest.multiplatform" version "5.0.2"
 }
 
-version "0.1-SNAPSHOT"
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        withJava()
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
 
-dependencies {
-    api platform("io.arrow-kt:arrow-stack:${rootProject.ext.arrowVersion}")
+    ios {
+        binaries {
+            framework {
+                baseName = "HttpApiClient"
+            }
+        }
+    }
 
-    api "io.arrow-kt:arrow-core"
-    api "io.arrow-kt:arrow-fx-coroutines"
+    sourceSets {
+        commonMain {
+            dependencies {
+                api "io.arrow-kt:arrow-core:${rootProject.ext.arrowVersion}"
+                api "io.arrow-kt:arrow-fx-coroutines:${rootProject.ext.arrowVersion}"
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation "io.kotest:kotest-framework-engine:${rootProject.ext.kotestVersion}"
+                implementation "io.kotest:kotest-assertions-core:${rootProject.ext.kotestVersion}"
+                implementation "io.kotest:kotest-property:${rootProject.ext.kotestVersion}"
+                implementation "io.kotest.extensions:kotest-assertions-arrow:1.2.3"
+            }
+        }
+
+        iosMain {
+            dependsOn(commonMain)
+            iosX64Main.dependsOn(it)
+            iosArm64Main.dependsOn(it)
+        }
+
+        iosTest {
+            dependsOn(commonTest)
+            iosX64Test.dependsOn(it)
+            iosArm64Test.dependsOn(it)
+        }
+
+        jvmMain {
+            // we publish submodules in this group.
+            group "au.com.redcrew.apisdkcreator"
+            version "0.1-SNAPSHOT"
+        }
+
+        jvmTest {
+            dependencies {
+                implementation "io.kotest:kotest-runner-junit5:${rootProject.ext.kotestVersion}"
+            }
+        }
+    }
 }

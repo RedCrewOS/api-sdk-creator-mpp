@@ -15,10 +15,10 @@ class UnstructuredDataTest : DescribeSpec({
                 val unmarshaller = object : UnstructuredDataToGenericTypeUnmarshaller() {
                     @Suppress("UNCHECKED_CAST")
                     override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
-                        Integer.parseInt(data).right() as Either<SdkError, T>
+                        data.reversed().right() as Either<SdkError, T>
                 }
 
-                unmarshaller(Int::class)(UnstructuredData.String("1234")).shouldBeRight(1234)
+                unmarshaller(Int::class)(UnstructuredData.String("1234")).shouldBeRight("4321")
             }
 
             it("should return error when unmarshalling fails") {

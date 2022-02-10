@@ -7,7 +7,7 @@ import au.com.redcrew.apisdkcreator.httpclient.SdkError
 private fun toInvalidNumberError(message: String?, cause: Any): SdkError =
     SdkError(INVALID_NUMBER_ERROR_TYPE, message ?: "", cause)
 
-fun parseInt(value: String): Either<SdkError, Int> =
+actual fun parseInt(value: String): Either<SdkError, Int> =
     Either.catch(
         { toInvalidNumberError(it.message, it) },
         { Integer.parseInt(value) }

@@ -19,7 +19,6 @@ enum class HttpRequestMethod {
 }
 
 sealed class HttpRequestUrl {
-    data class URL(val url: java.net.URL) : HttpRequestUrl()
     data class String(val url: kotlin.String) : HttpRequestUrl()
 }
 
