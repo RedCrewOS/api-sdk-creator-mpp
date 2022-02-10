@@ -1,6 +1,6 @@
 #  http-api-client
 
-A Kotlin library that can be used as a foundation to build clients (SDKs) for HTTP based APIs.
+A [Kotlin MPP](https://kotlinlang.org/docs/mpp-get-started.html) library that can be used as a foundation to build clients (SDKs) for HTTP based APIs.
 
 | :memo: | This library is still in active development and may break compatibility in future releases |
 |--------|:------------------------------------------------------------------------------------------|
@@ -9,11 +9,17 @@ A Kotlin library that can be used as a foundation to build clients (SDKs) for HT
 
 Include in your dependencies
 
+### JVM (Android)
+
 ```groovy
 dependencies {
     implementation "au.com.redcrew.apisdkcreator:http-api-client:0.1-SNAPSHOT"
 }
 ```
+
+### iOS
+
+TODO
 
 ## Motivation
 
