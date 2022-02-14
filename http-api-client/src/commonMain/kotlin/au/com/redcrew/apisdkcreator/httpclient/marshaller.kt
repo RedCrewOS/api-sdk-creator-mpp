@@ -98,8 +98,8 @@ fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedRespo
  * Each function tries to unmarshall the UnstructuredData into some other (structured) type.
  * If no function succeeds, then an "Unsupported content type" error is returned.
  */
-// unmarshaller :: [ ResponseUnmarshaller<T> ] -> HttpResultHandler
-fun <T> unmarshaller(vararg unmarshallers: ResponseUnmarshaller<T>): HttpResultHandler<*, UnstructuredData, T> =
+// unmarshaller :: List ResponseUnmarshaller<T> -> HttpResultHandler
+fun <T> unmarshaller(unmarshallers: List<ResponseUnmarshaller<T>>): HttpResultHandler<*, UnstructuredData, T> =
     { result ->
         val response = result.response
         val initial: Either<SdkError, Either<HttpResponse<UnstructuredData>, HttpResponse<T>>> =
@@ -130,6 +130,9 @@ fun <T> unmarshaller(vararg unmarshallers: ResponseUnmarshaller<T>): HttpResultH
                 )
             }
     }
+
+fun <T> unmarshaller(vararg fns: ResponseUnmarshaller<T>): HttpResultHandler<*, UnstructuredData, T> =
+    unmarshaller(fns.asList())
 
 /**
  * A generic type unmarshaller is a function that, given any KClass, will return an instance of the type defined by
