@@ -7,7 +7,7 @@ import arrow.core.right
 typealias HttpHeaders = Map<String, String>
 
 // concatHeaders :: RequestHeaderFactory -> HttpHeaders -> Either HttpHeaders
-private suspend fun concatHeaders(factory: RequestHeaderFactory): suspend (HttpHeaders) -> Either<SdkError, HttpHeaders> =
+private fun concatHeaders(factory: RequestHeaderFactory): suspend (HttpHeaders) -> Either<SdkError, HttpHeaders> =
     { headers -> factory(headers).map { headers + it }
 }
 
@@ -21,7 +21,7 @@ private fun toAuthorisationHeader(value: String): HttpHeaders = mapOf("authoriza
  * Creates a {@link RequestHeadersFactory} using {@link RequestHeaderFactory}s
  */
 // createHeaders :: List RequestHeaderFactory -> RequestHeadersFactory
-suspend fun createHeaders(vararg factories: RequestHeaderFactory): RequestHeadersFactory =
+fun createHeaders(vararg factories: RequestHeaderFactory): RequestHeadersFactory =
     {
         factories.fold(Either.Right(emptyMap())) {
             headers: Either<SdkError, HttpHeaders>, factory: RequestHeaderFactory ->
@@ -35,7 +35,7 @@ suspend fun createHeaders(vararg factories: RequestHeaderFactory): RequestHeader
  * Adds a bearer token to request headers
  */
 // bearerToken :: (() -> Either SdkError String) -> RequestHeaderFactory
-suspend fun bearerToken(tokenFactory: suspend () -> Either<SdkError, String>): RequestHeaderFactory =
+fun bearerToken(tokenFactory: suspend () -> Either<SdkError, String>): RequestHeaderFactory =
     { _ ->
         either {
             toAuthorisationHeader(toBearerToken(tokenFactory().bind()))

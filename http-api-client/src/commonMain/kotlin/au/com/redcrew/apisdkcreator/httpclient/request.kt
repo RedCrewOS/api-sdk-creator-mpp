@@ -92,7 +92,7 @@ typealias RequestHeadersFactory = suspend () -> Either<SdkError, HttpHeaders>
  * Creates a {@link HttpRequestPolicy} to add headers to a request
  */
 // addHeaders :: RequestHeadersFactory -> HttpRequestPolicy
-suspend fun addHeaders(factory: RequestHeadersFactory): HttpRequestPolicy<*, *> = { request ->
+fun addHeaders(factory: RequestHeadersFactory): HttpRequestPolicy<*, *> = { request ->
     either {
         val headers: HttpHeaders = factory().bind()
 
@@ -100,7 +100,7 @@ suspend fun addHeaders(factory: RequestHeadersFactory): HttpRequestPolicy<*, *> 
     }
 }
 
-suspend fun resolveUrl(base: String): HttpRequestPolicy<*, *> = { request ->
+fun resolveUrl(base: String): HttpRequestPolicy<*, *> = { request ->
     either {
         val url = when(request.url) {
             is HttpRequestUrl.String -> Either.Right("${base}${request.url.url}")
