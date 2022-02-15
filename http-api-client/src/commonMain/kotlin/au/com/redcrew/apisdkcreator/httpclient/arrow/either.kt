@@ -22,3 +22,6 @@ infix fun <A, E, B, C> (
     suspend (A) -> Either<E, B>).pipeK(ff: suspend (B) -> Either<E, C>
 ): suspend (A) -> Either<E, C> =
     { a: A -> either { ff(this@pipeK(a).bind()).bind() } }
+
+fun <A, B> aLeft(value: A) = Either.Left(value) as Either<A, B>
+fun <A, B> aRight(value: B) = Either.Right(value) as Either<A, B>
