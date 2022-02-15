@@ -4,11 +4,6 @@ import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
 import kotlin.reflect.KClass
 
 /**
- * Default mime type for JSON.
- */
-const val JSON_MIME_TYPE = "application/json"
-
-/**
  * A factory function to aid in marshalling JSON data into a HttpRequest.
  */
 fun jsonMarshaller(contentType: String = JSON_MIME_TYPE): (Marshaller) -> HttpRequestPolicy<*, UnstructuredData> =
@@ -27,6 +22,17 @@ fun jsonUnmarshaller(unmarshallerFactory: GenericTypeUnmarshaller, contentType: 
             return unmarshaller(unmarshallerFor(contentType)(unmarshallerFactory(p1)))
         }
     }
+
+/**
+ * A generic type unmarshaller is a function that, given any KClass, will return an instance of the type defined by
+ * the class.
+ *
+ * This will be most often returned/used by functions that wrap JSON libraries like Gson, or Jackson.
+ */
+// GenericTypeUnmarshaller :: (KClass<T>) -> Unmarshaller<T>
+interface GenericTypeUnmarshaller: GenericTypeCurriedFunction {
+    operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
+}
 
 // GenericJsonResultHandler :: (KClass<T>) -> HttpResultHandler<*, UnstructuredData, T>
 interface GenericJsonResultHandler: GenericTypeCurriedFunction {

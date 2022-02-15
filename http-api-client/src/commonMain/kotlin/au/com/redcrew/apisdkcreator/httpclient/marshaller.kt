@@ -4,7 +4,6 @@ import arrow.core.*
 import arrow.core.computations.either
 import arrow.core.computations.option
 import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
-import kotlin.reflect.KClass
 
 typealias Marshaller = suspend (Any) -> Either<SdkError, UnstructuredData>
 typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<SdkError, T>
@@ -135,17 +134,6 @@ fun <T> unmarshaller(vararg fns: ResponseUnmarshaller<T>): HttpResultHandler<*, 
     unmarshaller(fns.asList())
 
 /**
- * A generic type unmarshaller is a function that, given any KClass, will return an instance of the type defined by
- * the class.
- *
- * This will be most often returned/used by functions that wrap JSON libraries like Gson, or Jackson.
- */
-// GenericTypeUnmarshaller :: (KClass<T>) -> Unmarshaller<T>
-interface GenericTypeUnmarshaller: GenericTypeCurriedFunction {
-    operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
-}
-
-/**
  * Used to create a function that, given an Unmarshaller, will return an ResponseUnmarshaller to try and unmarshall the
  * HttpResponse body.
  */
@@ -156,17 +144,16 @@ class TypedResponseUnmarshaller(
     operator fun <T : Any> invoke(p1: Unmarshaller<T>): ResponseUnmarshaller<T> {
         return { response: HttpResponse<UnstructuredData> ->
             either {
-                response.body?.let {
-                    when {
-                        hasContentType(contentType, response) -> response.copyWithBody(body = p1(it).bind()).right()
-                        else -> response.left()
-                    }
-                } ?: run {
+                when(val body = response.body) {
                     /*
                      * If we don't have a body to try to unmarshall, then we should consider the unmarshalling
                      * successful.
                      */
-                    response.copyWithBody<T>(body = null).right()
+                    null -> response.copyWithBody<T>(body = null).right()
+                    else -> when {
+                        hasContentType(contentType, response) -> response.copyWithBody(body = p1(body).bind()).right()
+                        else -> response.left()
+                    }
                 }
             }
         }
