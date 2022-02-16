@@ -10,7 +10,7 @@ See the individual library READMEs for more details. The best starting place is 
 
 # Supported Platforms
 - [JVM (Android)](https://github.com/RedCrewOS/api-sdk-creator-jvm/)
-- iOS (IN PROGRESS)
+- iOS (VERY EXPERIMENTAL)
 
 # Development
 
