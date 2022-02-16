@@ -1,8 +1,10 @@
-rootProject.name = "api-sdk-creator"
-include "test"
+pluginManagement {
+    plugins {
+        id "org.jetbrains.kotlin.multiplatform" version "1.6.0"
+        id "org.jetbrains.kotlin.native.cocoapods" version "1.6.0"
+    }
+}
 
+rootProject.name = "api-sdk-creator-mpp"
 include "http-api-client"
-include "gson"
-include "ok-http"
-include "example"
 

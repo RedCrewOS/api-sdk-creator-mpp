@@ -1,9 +1,15 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.5.10"
+
 }
 
 allprojects {
     repositories {
         mavenCentral()
     }
+}
+
+ext {
+    arrowVersion = "1.0.1"
+    kotlinCoroutinesVersion = "1.6.0"
+    kotestVersion = "5.1.0"
 }
