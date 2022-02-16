@@ -13,7 +13,7 @@ Include in your dependencies
 
 ```groovy
 dependencies {
-    implementation "au.com.redcrew.apisdkcreator:http-api-client:0.1-SNAPSHOT"
+    implementation "au.com.redcrew.apisdkcreator:http-api-client:0.1.0"
 }
 ```
 
@@ -87,4 +87,6 @@ See the docs on `GenericTypeCurriedFunction` for more details on the implementat
 
 ## Examples
 
-See the [example](../example) for a documented example of how to use this library to compose an API call.
+See the platform examples
+
+- [JVM](https://github.com/RedCrewOS/api-sdk-creator-jvm/example)
