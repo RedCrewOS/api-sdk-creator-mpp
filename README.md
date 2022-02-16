@@ -26,8 +26,7 @@ $ ./gradlew build
 ## Testing
 
 ```shell
-$ ./grawdle test
-$ cd <project> && ../gradlew test
+$ ./gradlew jvmTest iosX64Test
 ```
 
 ## Publishing
