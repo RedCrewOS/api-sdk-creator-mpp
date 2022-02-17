@@ -6,8 +6,8 @@ import kotlin.reflect.KClass
 /**
  * A factory function to aid in marshalling JSON data into a HttpRequest.
  */
-fun jsonMarshaller(contentType: String = JSON_MIME_TYPE): (Marshaller) -> HttpRequestPolicy<*, UnstructuredData> =
-    marshallerFor(contentType)
+fun jsonMarshaller(marshaller: Marshaller, contentType: String = JSON_MIME_TYPE): HttpRequestPolicy<*, UnstructuredData> =
+    marshallerFor(contentType)(marshaller)
 
 /**
  * A factory function to aid in unmarshalling JSON data

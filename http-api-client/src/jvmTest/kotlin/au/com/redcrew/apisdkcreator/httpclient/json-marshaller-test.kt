@@ -27,10 +27,10 @@ class JsonMarshallingTest : DescribeSpec({
             val request = aHttpRequest<TestBody>().withBody(body).build()
 
             suspend fun marshall(contentType: String): Either<SdkError, HttpRequest<UnstructuredData>> =
-                jsonMarshaller(contentType)(marshaller)(request)
+                jsonMarshaller(marshaller, contentType)(request)
 
             suspend fun marshall(): Either<SdkError, HttpRequest<UnstructuredData>> =
-                jsonMarshaller()(marshaller)(request)
+                jsonMarshaller(marshaller)(request)
 
             it("should set content type") {
                 val contentType = "application/json+vnd"
