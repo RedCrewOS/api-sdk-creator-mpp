@@ -55,43 +55,31 @@ private fun beResponse(
     body: Any? = response.body
 ) =
     object: Matcher<HttpResponse<*>> {
-        override fun test(value: HttpResponse<*>): MatcherResult {
-            if (value.statusCode != statusCode) {
-                return MatcherResult(
-                    false,
+        override fun test(value: HttpResponse<*>): MatcherResult =
+            when {
+                value.statusCode != statusCode -> MatcherResult(false,
                     { "${value.statusCode} should be $statusCode" },
                     { "${value.statusCode} should not be $statusCode" }
                 )
-            }
 
-            if (value.statusMessage != statusMessage) {
-                return MatcherResult(
-                    false,
+                value.statusMessage != statusMessage -> MatcherResult(false,
                     { "${value.statusMessage} should be $statusMessage" },
                     { "${value.statusMessage} should not be $statusMessage" }
                 )
-            }
 
-            if (value.headers != headers) {
-                return MatcherResult(
-                    false,
+                value.headers != headers -> MatcherResult(false,
                     { "${value.headers} should be $headers" },
                     { "${value.headers} should not be $headers" }
                 )
-            }
 
-            if (value.body != body) {
-                return MatcherResult(
-                    false,
+                value.body != body -> MatcherResult(false,
                     { "${value.body} should be $body" },
                     { "${value.body} should not be $body" }
                 )
-            }
 
-            return MatcherResult(
-                true,
-                { "response matches expected" },
-                { "response does not match expected" }
-            )
-        }
+                else -> MatcherResult(true,
+                    { "response matches expected" },
+                    { "response does not match expected" }
+                )
+            }
     }
