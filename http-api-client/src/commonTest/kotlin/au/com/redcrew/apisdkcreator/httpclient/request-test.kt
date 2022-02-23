@@ -2,6 +2,9 @@ package au.com.redcrew.apisdkcreator.httpclient
 
 import arrow.core.Either
 import au.com.redcrew.apisdkcreator.httpclient.data.aHttpRequest
+import au.com.redcrew.apisdkcreator.httpclient.matchers.notEqual
+import au.com.redcrew.apisdkcreator.httpclient.matchers.test
+import au.com.redcrew.apisdkcreator.httpclient.matchers.tests
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
@@ -112,59 +115,13 @@ fun beRequest(
     body: Any? = request.body
 ) =
     object : Matcher<HttpRequest<*>> {
-        override fun test(value: HttpRequest<*>): MatcherResult {
-            if (value.method != method) {
-                return MatcherResult(
-                    false,
-                    { "${value.method} should be $method" },
-                    { "${value.method} should not be $method" }
-                )
-            }
-
-            if (value.url != url) {
-                return MatcherResult(
-                    false,
-                    { "${value.url} should be $url" },
-                    { "${value.url} should not be $url" }
-                )
-            }
-
-            if (value.headers != headers) {
-                return MatcherResult(
-                    false,
-                    { "${value.headers} should be $headers" },
-                    { "${value.headers} should not be $headers" }
-                )
-            }
-
-            if (value.pathParams != pathParams) {
-                return MatcherResult(
-                    false,
-                    { "${value.pathParams} should be $pathParams" },
-                    { "${value.pathParams} should not be $pathParams" }
-                )
-            }
-
-            if (value.queryParams != queryParams) {
-                return MatcherResult(
-                    false,
-                    { "${value.queryParams} should be $queryParams" },
-                    { "${value.queryParams} should not be $queryParams" }
-                )
-            }
-
-            if (value.body != body) {
-                return MatcherResult(
-                    false,
-                    { "${value.body} should be $body" },
-                    { "${value.body} should not be $body" }
-                )
-            }
-
-            return MatcherResult(
-                true,
-                { "request matches expected" },
-                { "request doe not match expected" }
+        override fun test(value: HttpRequest<*>): MatcherResult =
+            Matcher.tests(
+                MatcherResult.test(::notEqual, method, value.method),
+                MatcherResult.test(::notEqual, url, value.url),
+                MatcherResult.test(::notEqual, headers, value.headers),
+                MatcherResult.test(::notEqual, pathParams, value.pathParams),
+                MatcherResult.test(::notEqual, queryParams, value.queryParams),
+                MatcherResult.test(::notEqual, body, value.body)
             )
-        }
     }

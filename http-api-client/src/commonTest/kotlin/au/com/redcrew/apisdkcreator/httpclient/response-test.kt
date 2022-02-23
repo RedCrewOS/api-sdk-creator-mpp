@@ -1,5 +1,8 @@
 package au.com.redcrew.apisdkcreator.httpclient
 
+import au.com.redcrew.apisdkcreator.httpclient.matchers.notEqual
+import au.com.redcrew.apisdkcreator.httpclient.matchers.test
+import au.com.redcrew.apisdkcreator.httpclient.matchers.tests
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
@@ -56,30 +59,10 @@ private fun beResponse(
 ) =
     object: Matcher<HttpResponse<*>> {
         override fun test(value: HttpResponse<*>): MatcherResult =
-            when {
-                value.statusCode != statusCode -> MatcherResult(false,
-                    { "${value.statusCode} should be $statusCode" },
-                    { "${value.statusCode} should not be $statusCode" }
-                )
-
-                value.statusMessage != statusMessage -> MatcherResult(false,
-                    { "${value.statusMessage} should be $statusMessage" },
-                    { "${value.statusMessage} should not be $statusMessage" }
-                )
-
-                value.headers != headers -> MatcherResult(false,
-                    { "${value.headers} should be $headers" },
-                    { "${value.headers} should not be $headers" }
-                )
-
-                value.body != body -> MatcherResult(false,
-                    { "${value.body} should be $body" },
-                    { "${value.body} should not be $body" }
-                )
-
-                else -> MatcherResult(true,
-                    { "response matches expected" },
-                    { "response does not match expected" }
-                )
-            }
+            Matcher.tests(
+                MatcherResult.test(::notEqual, statusCode, value.statusCode),
+                MatcherResult.test(::notEqual, statusMessage, value.statusMessage),
+                MatcherResult.test(::notEqual, headers, value.headers),
+                MatcherResult.test(::notEqual, body, value.body),
+            )
     }
