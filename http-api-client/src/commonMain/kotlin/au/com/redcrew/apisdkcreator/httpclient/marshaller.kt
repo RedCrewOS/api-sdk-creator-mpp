@@ -141,8 +141,8 @@ fun <T> unmarshaller(vararg fns: ResponseUnmarshaller<T>): HttpResultHandler<*, 
 class TypedResponseUnmarshaller(
     private val contentType: String
 ) : GenericTypeCurriedFunction {
-    operator fun <T : Any> invoke(p1: Unmarshaller<T>): ResponseUnmarshaller<T> {
-        return { response: HttpResponse<UnstructuredData> ->
+    operator fun <T : Any> invoke(p1: Unmarshaller<T>): ResponseUnmarshaller<T> =
+        { response: HttpResponse<UnstructuredData> ->
             either {
                 when(val body = response.body) {
                     /*
@@ -157,5 +157,4 @@ class TypedResponseUnmarshaller(
                 }
             }
         }
-    }
 }

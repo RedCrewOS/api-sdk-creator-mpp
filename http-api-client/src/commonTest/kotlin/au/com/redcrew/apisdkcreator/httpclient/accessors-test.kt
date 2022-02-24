@@ -11,12 +11,11 @@ import io.kotest.matchers.shouldBe
 
 class AccessorsTest : DescribeSpec({
     describe("accessors") {
-        fun givenHttpResult(body: Any): HttpResult<Any, Any> {
-            return HttpResult(
+        fun givenHttpResult(body: Any): HttpResult<Any, Any> =
+            HttpResult(
                 aHttpRequest<Any>().build(),
                 aHttpResponse<Any>().withBody(body).build()
             )
-        }
 
         it("should extract response body from result") {
             val body = mapOf<Any, Any>("a" to 1, "x" to "foo")

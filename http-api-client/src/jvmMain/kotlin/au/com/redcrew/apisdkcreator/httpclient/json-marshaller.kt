@@ -18,9 +18,8 @@ fun jsonMarshaller(marshaller: Marshaller, contentType: String = JSON_MIME_TYPE)
 // jsonUnmarshaller :: (KClass<T> -> Unmarshaller<T>, String) -> KClass<T> -> HttpResultHandler<*, UnstructuredData, T>
 fun jsonUnmarshaller(unmarshallerFactory: GenericTypeUnmarshaller, contentType: String = JSON_MIME_TYPE): GenericJsonResultHandler =
     object : GenericJsonResultHandler {
-        override fun <T : Any> invoke(p1: KClass<T>): HttpResultHandler<*, UnstructuredData, T> {
-            return unmarshaller(unmarshallerFor(contentType)(unmarshallerFactory(p1)))
-        }
+        override fun <T : Any> invoke(p1: KClass<T>): HttpResultHandler<*, UnstructuredData, T> =
+            unmarshaller(unmarshallerFor(contentType)(unmarshallerFactory(p1)))
     }
 
 /**

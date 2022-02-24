@@ -87,7 +87,6 @@ class GenericTypeUnmarshallerWrapper<A: Any>(
     private val delegate: (KClass<A>) -> Unmarshaller<A>
 ) : GenericTypeUnmarshaller {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> {
-        return delegate(p1 as KClass<A>) as Unmarshaller<T>
-    }
+    override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
+        delegate(p1 as KClass<A>) as Unmarshaller<T>
 }
