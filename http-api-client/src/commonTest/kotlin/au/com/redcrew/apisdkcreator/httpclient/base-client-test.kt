@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
+@Suppress("unused")
 class BaseHttpClientTest : DescribeSpec({
     describe("Base Http Client") {
         describe("path params") {

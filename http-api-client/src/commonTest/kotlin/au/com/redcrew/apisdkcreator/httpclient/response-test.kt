@@ -8,6 +8,7 @@ import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 
+@Suppress("unused")
 class ResponseTest : DescribeSpec({
     describe("Http Response") {
         describe("copyWithBody") {

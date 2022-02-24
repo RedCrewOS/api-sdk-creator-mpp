@@ -10,7 +10,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 
-@Suppress("NAME_SHADOWING")
+@Suppress("NAME_SHADOWING", "unused")
 class MarshallingTest :DescribeSpec({
     describe("Marshalling") {
         /*

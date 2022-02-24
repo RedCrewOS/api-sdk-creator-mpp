@@ -16,6 +16,7 @@ private fun successToString(successful: Boolean): String =
         false -> "unsuccessful"
     }
 
+@Suppress("unused")
 class PredicatesTest : DescribeSpec({
     val data = listOf(
         TestData(199, false),

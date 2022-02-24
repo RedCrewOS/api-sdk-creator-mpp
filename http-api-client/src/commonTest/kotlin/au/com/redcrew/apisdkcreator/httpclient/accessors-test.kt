@@ -9,6 +9,7 @@ import io.kotest.assertions.arrow.core.shouldBeSome
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 
+@Suppress("unused")
 class AccessorsTest : DescribeSpec({
     describe("accessors") {
         fun givenHttpResult(body: Any): HttpResult<Any, Any> =

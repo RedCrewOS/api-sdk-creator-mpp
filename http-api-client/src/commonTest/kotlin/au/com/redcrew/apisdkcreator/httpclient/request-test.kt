@@ -13,6 +13,7 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 
+@Suppress("unused")
 class RequestTest : DescribeSpec({
     describe("Http Request") {
         describe("adding headers") {
