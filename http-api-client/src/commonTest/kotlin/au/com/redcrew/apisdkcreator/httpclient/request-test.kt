@@ -10,7 +10,6 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 
 @Suppress("unused")
@@ -70,43 +69,43 @@ class RequestTest : DescribeSpec({
             it("should change method") {
                 val result = request.copyWithBody(method = method, body = body)
 
-                result.should(beRequest(request, method = method, body = body))
+                result.shouldBe(aRequest(request, method = method, body = body))
             }
 
             it("should change url") {
                 val result = request.copyWithBody(url = url, body = body)
 
-                result.should(beRequest(request, url = url, body = body))
+                result.shouldBe(aRequest(request, url = url, body = body))
             }
 
             it("should change headers") {
                 val result = request.copyWithBody(headers = headers, body = body)
 
-                result.should(beRequest(request, headers = headers, body = body))
+                result.shouldBe(aRequest(request, headers = headers, body = body))
             }
 
             it("should change path params") {
                 val result = request.copyWithBody(pathParams = pathParams, body = body)
 
-                result.should(beRequest(request, pathParams = pathParams, body = body))
+                result.shouldBe(aRequest(request, pathParams = pathParams, body = body))
             }
 
             it("should change query parameters") {
                 val result = request.copyWithBody(queryParams = queryParams, body = body)
 
-                result.should(beRequest(request, queryParams = queryParams, body = body))
+                result.shouldBe(aRequest(request, queryParams = queryParams, body = body))
             }
 
             it("should change body only") {
                 val result = request.copyWithBody(body = body)
 
-                result.should(beRequest(request, body = body))
+                result.shouldBe(aRequest(request, body = body))
             }
         }
     }
 })
 
-fun beRequest(
+fun aRequest(
     request: HttpRequest<*>,
     method: HttpRequestMethod = request.method,
     url: HttpRequestUrl = request.url,
