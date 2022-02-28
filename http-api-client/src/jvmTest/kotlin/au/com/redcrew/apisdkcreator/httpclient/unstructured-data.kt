@@ -12,7 +12,7 @@ class UnstructuredDataTest : DescribeSpec({
     describe("unstructured data") {
         describe("UnstructuredDataToGenericTypeUnmarshaller") {
             it("should return result of unmarshalling") {
-                val unmarshaller = object : UnstructuredDataToGenericTypeUnmarshaller() {
+                val unmarshaller = object : UnstructuredDataToGenericClassUnmarshaller() {
                     @Suppress("UNCHECKED_CAST")
                     override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
                         data.reversed().right() as Either<SdkError, T>
@@ -24,7 +24,7 @@ class UnstructuredDataTest : DescribeSpec({
             it("should return error when unmarshalling fails") {
                 val error = SdkError("fake-error", "Something went wrong")
 
-                val unmarshaller = object : UnstructuredDataToGenericTypeUnmarshaller() {
+                val unmarshaller = object : UnstructuredDataToGenericClassUnmarshaller() {
                     override fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T> =
                         error.left()
                 }

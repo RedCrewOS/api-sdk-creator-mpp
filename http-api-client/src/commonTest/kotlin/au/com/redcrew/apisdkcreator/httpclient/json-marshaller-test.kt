@@ -8,9 +8,8 @@ import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
-import kotlin.reflect.KClass
 
-@Suppress("NAME_SHADOWING")
+@Suppress("NAME_SHADOWING", "unused")
 class JsonMarshallingTest : DescribeSpec({
     describe("JSON Marshalling") {
         data class TestBody(
@@ -49,7 +48,6 @@ class JsonMarshallingTest : DescribeSpec({
 
         describe("unmarshaller") {
             val unmarshaller: Unmarshaller<TestBody> = { body.right() }
-            val factory: GenericTypeUnmarshaller = GenericTypeUnmarshallerWrapper<TestBody> { unmarshaller }
 
             val result = HttpResult(
                 request = aHttpRequest<Any>().build(),
@@ -60,10 +58,10 @@ class JsonMarshallingTest : DescribeSpec({
             )
 
             suspend fun unmarshall(contentType: String): Either<SdkError, HttpResult<*, TestBody>> =
-                jsonUnmarshaller(factory, contentType)(TestBody::class)(result)
+                jsonUnmarshaller(unmarshaller, contentType)(result)
 
             suspend fun unmarshall(): Either<SdkError, HttpResult<*, TestBody>> =
-                jsonUnmarshaller(factory)(TestBody::class)(result)
+                jsonUnmarshaller(unmarshaller)(result)
 
             it("should set content type") {
                 val contentType = "text/plain"
@@ -82,11 +80,3 @@ class JsonMarshallingTest : DescribeSpec({
         }
     }
 })
-
-class GenericTypeUnmarshallerWrapper<A: Any>(
-    private val delegate: (KClass<A>) -> Unmarshaller<A>
-) : GenericTypeUnmarshaller {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
-        delegate(p1 as KClass<A>) as Unmarshaller<T>
-}

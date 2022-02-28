@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import kotlin.reflect.KClass
 
-abstract class UnstructuredDataToGenericTypeUnmarshaller : GenericTypeUnmarshaller {
+abstract class UnstructuredDataToGenericClassUnmarshaller : GenericClassUnmarshaller {
     override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
         { data: UnstructuredData ->
             @Suppress("REDUNDANT_ELSE_IN_WHEN")
