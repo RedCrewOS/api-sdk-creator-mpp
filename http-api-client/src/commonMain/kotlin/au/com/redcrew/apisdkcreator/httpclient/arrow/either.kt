@@ -10,7 +10,7 @@ import arrow.core.flatMap
  *
  * For an introduction to Kleisli arrows, see https://blog.ssanj.net/posts/2017-06-07-composing-monadic-functions-with-kleisli-arrows.html
  */
-infix fun <A,E,B,C> ((A) -> Either<E, B>).pipeK(ff: (B) -> Either<E,C>): (A) -> Either<E,C> =
+infix fun <A,E,B,C> ((A) -> Either<E, B>).pipe(ff: (B) -> Either<E,C>): (A) -> Either<E,C> =
     { a: A -> this(a).flatMap(ff) }
 
 /**
@@ -19,9 +19,9 @@ infix fun <A,E,B,C> ((A) -> Either<E, B>).pipeK(ff: (B) -> Either<E,C>): (A) -> 
  * To understand the use of `this` see https://kotlinlang.org/docs/this-expressions.html
  */
 infix fun <A, E, B, C> (
-    suspend (A) -> Either<E, B>).pipeK(ff: suspend (B) -> Either<E, C>
+    suspend (A) -> Either<E, B>).pipe(ff: suspend (B) -> Either<E, C>
 ): suspend (A) -> Either<E, C> =
-    { a: A -> either { ff(this@pipeK(a).bind()).bind() } }
+    { a: A -> either { ff(this@pipe(a).bind()).bind() } }
 
 fun <A, B> aLeft(value: A) = Either.Left(value) as Either<A, B>
 fun <A, B> aRight(value: B) = Either.Right(value) as Either<A, B>
