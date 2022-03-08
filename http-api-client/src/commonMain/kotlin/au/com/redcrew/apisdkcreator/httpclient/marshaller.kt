@@ -122,12 +122,7 @@ fun <T> unmarshaller(unmarshallers: List<ResponseUnmarshaller<T>>): HttpResultHa
                 }
             }
             .flatMap(::unsupportedContentType)
-            .bimap(::identity) { resp ->
-                HttpResult(
-                    request = result.request,
-                    response = resp
-                )
-            }
+            .bimap(::identity) { resp -> result.copyWithResponse(resp) }
     }
 
 fun <T> unmarshaller(vararg fns: ResponseUnmarshaller<T>): HttpResultHandler<*, UnstructuredData, T> =

@@ -43,7 +43,19 @@ typealias HttpClient = suspend (request: HttpRequest<UnstructuredData>) -> Eithe
 data class HttpResult<A, B>(
     val request: HttpRequest<A>,
     val response: HttpResponse<B>
-)
+) {
+    /**
+     * When using the default `copy` the type of the response body can't be changed.
+     *
+     * This method allows a copy where the type of the response body can be changed, and keeps the
+     * original request.
+     */
+    fun <C> copyWithResponse(response: HttpResponse<C>): HttpResult<A, C> =
+        HttpResult(
+            request = this.request,
+            response = response
+        )
+}
 
 /**
  * Manipulates the HttpRequest to conform to specific requirements of the endpoint
