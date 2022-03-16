@@ -11,5 +11,5 @@ import kotlin.reflect.KClass
  */
 // GenericClassUnmarshaller :: (KClass<T>) -> Unmarshaller<T>
 interface GenericClassUnmarshaller: GenericTypeCurriedFunction {
-    operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
+    suspend operator fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T>
 }

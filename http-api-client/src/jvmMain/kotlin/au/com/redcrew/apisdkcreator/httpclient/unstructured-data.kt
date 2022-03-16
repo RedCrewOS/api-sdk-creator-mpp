@@ -5,7 +5,7 @@ import arrow.core.left
 import kotlin.reflect.KClass
 
 abstract class UnstructuredDataToGenericClassUnmarshaller : GenericClassUnmarshaller {
-    override fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
+    override suspend fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
         { data: UnstructuredData ->
             @Suppress("REDUNDANT_ELSE_IN_WHEN")
             when (data) {
@@ -16,5 +16,5 @@ abstract class UnstructuredDataToGenericClassUnmarshaller : GenericClassUnmarsha
             }
         }
 
-    abstract fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T>
+    abstract suspend fun <T : Any> unmarshallString(cls: KClass<T>, data: String): Either<SdkError, T>
 }
