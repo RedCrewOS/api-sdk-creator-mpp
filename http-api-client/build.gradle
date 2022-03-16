@@ -55,7 +55,7 @@ kotlin {
         jvmMain {
             // we publish submodules in this group.
             group "au.com.redcrew.apisdkcreator"
-            version "0.4.0"
+            version "0.5.0"
         }
 
         jvmTest {
