@@ -14,8 +14,8 @@ private fun concatHeaders(factory: RequestHeaderFactory): suspend (HttpHeaders) 
 // toBearerToken :: String -> String
 private fun toBearerToken(token: String): String = "Bearer $token"
 
-// toAuthorisationHeader :: String -> HttpHeaders
-private fun toAuthorisationHeader(value: String): HttpHeaders = mapOf("authorization" to value)
+// toAuthorisationHeader :: String -> String? -> HttpHeaders
+private fun toAuthorisationHeader(value: String, headerName: String = "authorization"): HttpHeaders = mapOf(headerName to value)
 
 /**
  * Creates a {@link RequestHeadersFactory} using {@link RequestHeaderFactory}s
@@ -37,11 +37,14 @@ fun createHeaders(vararg fns: RequestHeaderFactory): RequestHeadersFactory =
 /**
  * Adds a bearer token to request headers
  */
-// bearerToken :: (() -> Either SdkError String) -> RequestHeaderFactory
-fun bearerToken(tokenFactory: suspend () -> Either<SdkError, String>): RequestHeaderFactory =
+// bearerToken :: (() -> Either SdkError String) -> String? -> RequestHeaderFactory
+fun bearerToken(
+    tokenFactory: suspend () -> Either<SdkError, String>,
+    headerName: String = "authorization"
+): RequestHeaderFactory =
     { _ ->
         either {
-            toAuthorisationHeader(toBearerToken(tokenFactory().bind()))
+            toAuthorisationHeader(toBearerToken(tokenFactory().bind()), headerName)
         }
     }
 

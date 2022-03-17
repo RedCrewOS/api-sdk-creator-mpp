@@ -3,6 +3,7 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.Either
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
 @Suppress("unused")
@@ -24,9 +25,16 @@ class HeadersTest : DescribeSpec({
         describe("bearer token factory") {
             it("should create authorization header") {
                 val token = "abc123"
-                val result = bearerToken { Either.Right(token) }(emptyMap()).shouldBeRight()
+                val result = bearerToken({ Either.Right(token) })(emptyMap()).shouldBeRight()
 
                 result["authorization"].shouldBe("Bearer $token")
+            }
+
+            it("should use header name") {
+                val headerName = "Authorization"
+                val result = bearerToken({ Either.Right("abc123") }, headerName)(emptyMap()).shouldBeRight()
+
+                result[headerName].shouldNotBeNull()
             }
         }
 
