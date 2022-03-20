@@ -45,3 +45,12 @@ dependencies {
 ### iOS
 
 TODO
+
+## Companion repositories
+
+Functionality that is often desired in an API pipeline is platform specific, for example, HTTP clients or JSON parsers. While modules in this repo abstracts platform specifics away, in a real application there needs to be an implementation of the abstraction.
+
+To help API SDK developers, companion repos are available with modules that provide specific implementations of abstractions that can suit application requirements.
+
+- [api-sdk-creator-jvm](https://github.com/RedCrewOS/api-sdk-creator-jvm)
+- iOS - TODO
