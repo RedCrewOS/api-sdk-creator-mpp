@@ -1,10 +1,14 @@
 plugins {
-
+    id "org.jetbrains.dokka" version "1.4.0"
 }
 
 allprojects {
     repositories {
         mavenCentral()
+        maven { url "https://jitpack.io" }
+
+        // Needed for Dokka
+        jcenter()
     }
 }
 
