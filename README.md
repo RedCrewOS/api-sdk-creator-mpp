@@ -54,3 +54,11 @@ To help API SDK developers, companion repos are available with modules that prov
 
 - [api-sdk-creator-jvm](https://github.com/RedCrewOS/api-sdk-creator-jvm)
 - iOS - TODO
+
+# Docs & examples
+
+Read the [📘 reference docs](/sdk/docs/sdk/index.html) for more information on the different types
+in the libraries.
+
+- [api-sdk-creator-jvm](https://github.com/RedCrewOS/api-sdk-creator-jvm) - has an `examples` module.
+- iOS - TODO
