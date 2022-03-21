@@ -3,6 +3,13 @@ package au.com.redcrew.apisdkcreator.httpclient
 import arrow.core.*
 import au.com.redcrew.apisdkcreator.httpclient.net.urlEncoder
 
+/**
+ * Helper function to replace path parameters (slugs) in a URI
+ *
+ * @param path A string with slugs
+ * @param params A map of slugs to values
+ * @return The path with the params replaced.
+ */
 fun replacePathParams(path: String, params: Map<String, String>): Either<SdkError, String> =
     path.split("/")
         .map { segment: String ->
@@ -20,6 +27,12 @@ fun replacePathParams(path: String, params: Map<String, String>): Either<SdkErro
         .sequenceEither()
         .map { it.joinToString("/") }
 
+/**
+ * Creates a query string from an object.
+ *
+ * @param params
+ * @return The query string
+ */
 fun createQueryString(params: Map<String, String>): String =
     when {
         params.isNotEmpty() -> "?${params.map(::mapEntryToPair).joinToString("&")}"

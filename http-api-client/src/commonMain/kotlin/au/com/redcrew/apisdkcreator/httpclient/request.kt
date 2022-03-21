@@ -83,13 +83,12 @@ typealias RequestHeaderFactory = suspend (headers: HttpHeaders) -> Either<SdkErr
  *
  * Creating some headers (eg: Authorization) may require async work to be done (ie: fetching an access token).
  *
- * @typedef {function} RequestHeadersFactory
  * @returns A new set of headers.
  */
 typealias RequestHeadersFactory = suspend () -> Either<SdkError, HttpHeaders>
 
 /**
- * Creates a {@link HttpRequestPolicy} to add headers to a request
+ * Creates a [HttpRequestPolicy] to add headers to a request
  */
 // addHeaders :: RequestHeadersFactory -> HttpRequestPolicy
 fun addHeaders(factory: RequestHeadersFactory): HttpRequestPolicy<*, *> = { request ->
@@ -100,6 +99,11 @@ fun addHeaders(factory: RequestHeadersFactory): HttpRequestPolicy<*, *> = { requ
     }
 }
 
+/**
+ * Resolves a relative URL in a {@link HttpRequest} to an absolute URL.
+ *
+ * Takes a base URL to resolve to, followed by a request.
+ */
 fun resolveUrl(base: String): HttpRequestPolicy<*, *> = { request ->
     either {
         val url = when(request.url) {

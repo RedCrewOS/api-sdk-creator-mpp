@@ -5,31 +5,24 @@ import arrow.core.computations.either
 import arrow.core.computations.option
 import au.com.redcrew.apisdkcreator.httpclient.kotlin.GenericTypeCurriedFunction
 
+/**
+ * A Marshaller is responsible converting a structured data type (eg: a data class) into [UnstructuredData] (eg: a String).
+ */
 typealias Marshaller = suspend (Any) -> Either<SdkError, UnstructuredData>
+
+/**
+ * An Unmarshaller is responsible for converting [UnstructuredData] to a type eg: a data class
+ */
 typealias Unmarshaller<T> = suspend (UnstructuredData) -> Either<SdkError, T>
+
+/**
+ * Transforms a [HttpResponse] of [UnstructuredData] to a HttpResponse of some type.
+ */
 typealias ResponseUnmarshaller<T> = suspend (HttpResponse<UnstructuredData>) ->
     Either<
         SdkError,
         Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
     >
-
-// split :: String -> String -> List String
-private fun split(delimiter: String): (String) -> List<String> = { str -> str.split(delimiter) }
-
-// takeFirst :: List a -> a
-private fun <T> takeFirst(lst: List<T>): T = lst.first()
-
-// trim :: String -> String
-private fun trim(str: String) = str.trim()
-
-// isSame :: a -> b -> Boolean
-private fun isSame(a: Any): (b: Any) -> Boolean = { b -> a == b }
-
-// hasContentType :: String -> HttpResult -> Boolean
-private fun hasContentType(contentType: String, response: HttpResponse<*>): Boolean =
-    Option.fromNullable(response.headers["content-type"])
-       .map(split(";") andThen ::takeFirst andThen ::trim andThen isSame(contentType))
-       .getOrElse { false }
 
 private fun <T> unsupportedContentType(
     response: Either<HttpResponse<UnstructuredData>, HttpResponse<T>>
@@ -41,14 +34,16 @@ private fun <T> unsupportedContentType(
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
  * an instance of the marshaller can be configured for the correct content type.
  *
- * The abstraction of how to actually convert between a type and an UnstructuredData type is so that users can wrap the
+ * The abstraction of how to actually convert between a type and [UnstructuredData] is so that users can wrap the
  * library of their choice.
  *
  * If an application/SDK wishes to support multiple marshallers to take advantage of content negotiation the
  * application will need to orchestrate the selection process.
  *
- * The result is a HttpRequestPolicy that will transform the body of the request (if present)
+ * The result is a [HttpRequestPolicy] that will transform the body of the request (if present)
  * and add the Content-Type request header.
+ *
+ * @param contentType What content type are we creating the marshaller for?
  */
 // marshallerFor :: String -> Marshaller -> HttpRequestPolicy<a, UnstructuredData>
 fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, UnstructuredData> =
@@ -59,6 +54,7 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
 
                 marshaller(body).map {
                     request.copyWithBody(
+                        // FIXME: Merge headers
                         headers = mapOf("content-type" to contentType),
                         body = it
                     )
@@ -76,7 +72,7 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
  * Most applications/SDKs accessing an API will want to use the same content type, so by having a curried function
  * an instance of the unmarshaller can be configured for the correct content type.
  *
- * The abstraction of how to actually convert between UnstructuredData and another type is so that users can wrap the
+ * The abstraction of how to actually convert between [UnstructuredData] and another type is so that users can wrap the
  * library of their choice.
  *
  * We can't guarantee the content type of a response is something an unmarshaller can process, therefore the result is
@@ -87,6 +83,8 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
  * content types. It also caters for the scenarios, most often in corporate networks, where a misconfigured
  * gateway/endpoint returns a different content type due to it being misconfigured. Often this is HTML, whereas an
  * application/SDK might be expecting JSON/XML in the response.
+ *
+ * @param contentType What content type are we creating the unmarshaller for?
  */
 // unmarshallerFor :: String -> Unmarshaller<T> -> ResponseUnmarshaller<T>
 fun unmarshallerFor(contentType: String): TypedResponseUnmarshaller = TypedResponseUnmarshaller(contentType)
@@ -129,8 +127,8 @@ fun <T> unmarshaller(vararg fns: ResponseUnmarshaller<T>): HttpResultHandler<*, 
     unmarshaller(fns.asList())
 
 /**
- * Used to create a function that, given an Unmarshaller, will return an ResponseUnmarshaller to try and unmarshall the
- * HttpResponse body.
+ * Used to create a function that, given an [Unmarshaller], will return an [ResponseUnmarshaller] to try and unmarshall
+ * the [HttpResponse] body.
  */
 // TypedResponseUnmarshaller :: (Unmarshaller<T>) -> ResponseUnmarshaller<T>
 class TypedResponseUnmarshaller(

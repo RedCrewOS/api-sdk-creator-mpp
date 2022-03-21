@@ -36,6 +36,9 @@ fun createHeaders(vararg fns: RequestHeaderFactory): RequestHeadersFactory =
 
 /**
  * Adds a bearer token to request headers
+ *
+ * @param tokenFactory How to obtain a token to insert into a request
+ * @param headerName The name of the "authorisation" header. Some servers are (incorrectly) case-sensitive.
  */
 // bearerToken :: (() -> Either SdkError String) -> String? -> RequestHeaderFactory
 fun bearerToken(
@@ -49,7 +52,7 @@ fun bearerToken(
     }
 
 /**
- * Adds the given header to a {@link HttpRequest}
+ * Adds the given header to a [HttpRequest]
  */
 // constantHeaders :: HttpHeaders -> RequestHeaderFactory
 fun constantHeaders(headers: HttpHeaders): RequestHeaderFactory = { headers.right() }

@@ -4,6 +4,9 @@ import arrow.core.Either
 import arrow.core.left
 import kotlin.reflect.KClass
 
+/**
+ * A helper base class that can switch on the type of [UnstructuredData] and delegate.
+ */
 abstract class UnstructuredDataToGenericClassUnmarshaller : GenericClassUnmarshaller {
     override suspend fun <T : Any> invoke(p1: KClass<T>): Unmarshaller<T> =
         { data: UnstructuredData ->
