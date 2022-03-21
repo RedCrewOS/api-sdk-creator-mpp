@@ -28,7 +28,7 @@ class MarshallingTest :DescribeSpec({
 
         describe("marshallerFor") {
             val marshaller: Marshaller = { json.right() }
-            val request = aHttpRequest<TestBody>().withBody(body).build()
+            val request = aHttpRequest<TestBody>().addHeader("x-special-header", "special value").withBody(body).build()
 
             suspend fun marshall(
                 aRequest: HttpRequest<TestBody> = request,
@@ -41,6 +41,12 @@ class MarshallingTest :DescribeSpec({
                 val result = marshall().shouldBeRight()
 
                 result.headers["content-type"].shouldBe(contentType)
+            }
+
+            it("should merge with existing headers") {
+                val result = marshall().shouldBeRight()
+
+                result.headers["x-special-header"].shouldBe("special value")
             }
 
             it("should set no content type when no request body") {

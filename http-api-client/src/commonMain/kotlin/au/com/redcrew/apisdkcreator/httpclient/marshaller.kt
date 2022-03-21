@@ -54,8 +54,7 @@ fun marshallerFor(contentType: String): (Marshaller) -> HttpRequestPolicy<*, Uns
 
                 marshaller(body).map {
                     request.copyWithBody(
-                        // FIXME: Merge headers
-                        headers = mapOf("content-type" to contentType),
+                        headers = request.headers + mapOf("content-type" to contentType),
                         body = it
                     )
                 }
