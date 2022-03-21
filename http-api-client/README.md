@@ -13,7 +13,7 @@ Include in your dependencies
 
 ```groovy
 dependencies {
-    implementation "au.com.redcrew.apisdkcreator:http-api-client:0.1.0"
+    implementation "com.github.RedCrewOS.api-sdk-creator-mpp:http-api-client:http-api-client_v0.5.0"
 }
 ```
 
@@ -83,7 +83,7 @@ See the docs on `GenericTypeCurriedFunction` for more details on the implementat
 
 ## Docs
 
-// TODO
+Read the [📘 reference docs](/docs/sdk/index.html)
 
 ## Examples
 
