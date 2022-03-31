@@ -52,6 +52,12 @@ data class HttpRequest<T>(
         url: HttpRequestUrl
     ) : this(method, url, emptyMap(), null, null, null)
 
+    constructor(
+        method: HttpRequestMethod,
+        url: HttpRequestUrl,
+        body: T
+    ) : this(method, url, emptyMap(), null, null, body)
+
     /**
      * When using the default `copy` the type of the body can't be changed.
      *
