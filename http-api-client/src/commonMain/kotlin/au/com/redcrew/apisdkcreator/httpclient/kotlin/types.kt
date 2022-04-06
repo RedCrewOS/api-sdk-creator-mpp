@@ -10,10 +10,16 @@ package au.com.redcrew.apisdkcreator.httpclient.kotlin
  * fun gsonUnmarshaller(gson: Gson): (KClass<T>) -> Unmarshaller<T>
  * ```
  *
- * The only option to make it compile is to add <T> to the named function, to make <T> part of the overall function
- * signature; in this case `gsonUnmarshaller`. This however would bind all resulting functions to one type when the
- * first function is called. If `gsonUnmarshaller` was called with `String` then we can only ever call the result
- * with `KClass<String>` leading to an `Unmarshaller<String>`
+ * The only option here to make it compile is to add `<T>` to the named function, to make `<T>` part of the overall
+ * function signature; in this case `gsonUnmarshaller`. For example,
+ *
+ * ```
+ * fun <T> gsonUnmarshaller(gson: Gson): (KClass<T>) -> Unmarshaller<T>
+ * ```
+ *
+ * This however would bind all resulting functions to one type when the first function is called. If `gsonUnmarshaller`
+ * was called with `String` then we can only ever call the result with `KClass<String>` leading to an
+ * `Unmarshaller<String>`
  *
  * This inhibits reuse and the ability to partially apply functions and pass the result to other functions which may
  * want to work on a set of types that are not known to where the partial application is performed.
