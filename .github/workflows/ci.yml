@@ -29,13 +29,13 @@ jobs:
         with:
           arguments: :http-api-client:jvmTest :http-api-client:iosX64Test
 
-      #- name: Update docs
-      #  if: ${{ github.ref == 'refs/heads/main' }}
-      #  run: |
-      #    ./gradlew dokkaHtml
-      #    git add sdk/docs/
-      #    git commit -m 'Updated docs' || echo "No changes to docs"
-      #    git push
+      - name: Update docs
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          ./gradlew dokkaHtml
+          git add sdk/docs/
+          git commit -m 'Updated docs' || echo "No changes to docs"
+          git push
 
       - name: Tag
         if: ${{ github.ref == 'refs/heads/main' }}
