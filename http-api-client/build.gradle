@@ -94,21 +94,19 @@ dokkaHtml {
     //moduleName ApiSdkCreator MPP")
 }
 
-publishing {
+nexusPublishing {
     repositories {
-        maven {
-            def releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            def snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            name = "deploy"
-            url = releasesRepoUrl
+        sonatype {
+            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 
-            credentials {
-                username = System.getenv("OSSRH_USERNAME") ?: ""
-                password = System.getenv("OSSRH_PASSWORD") ?: ""
-            }
+            username = System.getenv("OSSRH_USERNAME") ?: ""
+            password = System.getenv("OSSRH_PASSWORD") ?: ""
         }
     }
+}
 
+publishing {
     publications.forEach {
         it.artifact(javadocJar)
 
