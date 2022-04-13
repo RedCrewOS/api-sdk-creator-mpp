@@ -1,4 +1,5 @@
 name: 'http-api-client'
+concurrency: 'build'
 
 on:
   push:
