@@ -33,7 +33,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           ./gradlew dokkaHtml
-          git add sdk/docs/
+          git add http-api-client/docs/
           git commit -m 'Updated docs' || echo "No changes to docs"
           git push
 
