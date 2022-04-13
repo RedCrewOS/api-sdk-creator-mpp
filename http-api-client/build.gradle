@@ -1,8 +1,8 @@
 plugins {
-    id "org.jetbrains.kotlin.multiplatform"
-    id "io.kotest.multiplatform" version "5.0.2"
-    id "maven-publish"
+    id "io.kotest.multiplatform"
     id "org.jetbrains.dokka"
+    id "org.jetbrains.kotlin.multiplatform"
+    id "maven-publish"
 }
 
 kotlin {
