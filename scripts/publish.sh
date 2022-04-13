@@ -5,6 +5,9 @@ if [ $# -lt 1 ] ; then
   exit 1
 fi
 
+# Make sure we exit if a command fails.
+set -e
+
 module=$1
 version=$(./gradlew :${module}:properties | grep '^version:' | sed -e 's/^version: \(.*\)$/v\1/')
 tag="${module}_${version}"
@@ -18,6 +21,9 @@ echo "Checking for ${tag}"
 if git show-ref --tags $tag --quiet; then
   echo "Tag exists"
 else
+  echo "Publish to sonatype"
+  ./gradlew publish
+
   echo "Tagging with ${tag}"
   git tag $tag
 
