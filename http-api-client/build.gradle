@@ -6,6 +6,15 @@ plugins {
     id "signing"
 }
 
+task javadoc(type: Javadoc) {
+
+}
+
+def javadocJar = task javadocJar(type: Jar) {
+    archiveClassifier.set("javadoc")
+    from javadoc
+}
+
 kotlin {
     jvm {
         compilations.all {
@@ -101,6 +110,8 @@ publishing {
     }
 
     publications.forEach {
+        it.artifact(javadocJar)
+
         it.pom {
             name.set("HttpApiClient")
             description.set("Kotlin library to aid developers in the creation of API client SDKs. ")
@@ -139,9 +150,4 @@ signing {
     useInMemoryPgpKeys(signingKey, signingPassword)
 
     sign publishing.publications
-}
-
-task javadocJar(type: Jar) {
-    archiveClassifier.set("javadoc")
-    from javadoc
 }
