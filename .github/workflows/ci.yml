@@ -37,6 +37,16 @@ jobs:
           git commit -m 'Updated docs' || echo "No changes to docs"
           git push
 
+      - name: Publish to Sonatype
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          ./gradlew publish
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
+
       - name: Tag
         if: ${{ github.ref == 'refs/heads/main' }}
         run: ./scripts/tag.sh http-api-client
