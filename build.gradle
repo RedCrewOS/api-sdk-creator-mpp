@@ -5,16 +5,36 @@ plugins {
      * Consequently releases will have to be manually released from Nexus :'(
      */
     //id "io.github.gradle-nexus.publish-plugin"
-    //id "maven-publish"
+    id "maven-publish"
     id "org.jetbrains.dokka"
 }
 
+group "au.com.redcrew.apisdkcreator"
+
 allprojects {
+    apply plugin: "maven-publish"
+
     repositories {
         mavenCentral()
 
         // Needed for Dokka
         jcenter()
+    }
+
+    publishing {
+        repositories {
+            maven {
+                def releasesUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                def snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+
+                url = releasesUrl
+
+                credentials {
+                    username = System.getenv("OSSRH_USERNAME") ?: ""
+                    password = System.getenv("OSSRH_PASSWORD") ?: ""
+                }
+            }
+        }
     }
 }
 
