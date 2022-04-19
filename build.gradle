@@ -22,7 +22,7 @@ allprojects {
     publishing {
         repositories {
             maven {
-                def nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+                def nexusUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
                 def snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 
                 url = nexusUrl
