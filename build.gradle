@@ -19,6 +19,9 @@ ext {
     kotestVersion = "5.1.0"
 }
 
+// needed here for the publish-plugin
+group "au.com.redcrew.apisdkcreator"
+
 /*
  * This needs to be configured in the root project for the publish-plugin to work properly.
  */
