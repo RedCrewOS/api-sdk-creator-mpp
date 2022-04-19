@@ -1,5 +1,6 @@
 plugins {
     id "io.github.gradle-nexus.publish-plugin"
+    id "maven-publish"
     id "org.jetbrains.dokka"
 }
 
@@ -16,4 +17,19 @@ ext {
     arrowVersion = "1.0.1"
     kotlinCoroutinesVersion = "1.6.0"
     kotestVersion = "5.1.0"
+}
+
+/*
+ * This needs to be configured in the root project for the publish-plugin to work properly.
+ */
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+
+            username = System.getenv("OSSRH_USERNAME") ?: ""
+            password = System.getenv("OSSRH_PASSWORD") ?: ""
+        }
+    }
 }
