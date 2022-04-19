@@ -9,8 +9,6 @@ plugins {
     id "org.jetbrains.dokka"
 }
 
-group "au.com.redcrew.apisdkcreator"
-
 allprojects {
     apply plugin: "maven-publish"
 
