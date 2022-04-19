@@ -93,6 +93,21 @@ dokkaHtml {
 }
 
 publishing {
+    repositories {
+        maven {
+            def releasesUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            def snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+
+            name = "deploy"
+            url = releasesUrl
+
+            credentials {
+                username = System.getenv("OSSRH_USERNAME") ?: ""
+                password = System.getenv("OSSRH_PASSWORD") ?: ""
+            }
+        }
+    }
+
     publications.forEach {
         it.artifact(javadocJar)
 
