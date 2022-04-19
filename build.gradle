@@ -27,6 +27,7 @@ allprojects {
                 def releasesUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
                 def snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 
+                name = "deploy"
                 url = releasesUrl
 
                 credentials {
