@@ -1,5 +1,10 @@
 plugins {
-    id "io.github.gradle-nexus.publish-plugin"
+    /*
+     * Currently this plugin can't be used until multi-module (monorepos) are supported.
+     *
+     * Consequently releases will have to be manually released from Nexus :'(
+     */
+    //id "io.github.gradle-nexus.publish-plugin"
     id "maven-publish"
     id "org.jetbrains.dokka"
 }
@@ -19,20 +24,18 @@ ext {
     kotestVersion = "5.1.0"
 }
 
-// needed here for the publish-plugin
-group "au.com.redcrew.apisdkcreator"
-
-/*
- * This needs to be configured in the root project for the publish-plugin to work properly.
- */
-nexusPublishing {
+publishing {
     repositories {
-        sonatype {
-            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
-            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        maven {
+            def nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            def snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 
-            username = System.getenv("OSSRH_USERNAME") ?: ""
-            password = System.getenv("OSSRH_PASSWORD") ?: ""
+            url = nexusUrl
+
+            credentials {
+                username = System.getenv("OSSRH_USERNAME") ?: ""
+                password = System.getenv("OSSRH_PASSWORD") ?: ""
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ if git show-ref --tags $tag --quiet; then
   echo "Tag exists"
 else
   echo "Publish to sonatype"
-  ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+  ./gradlew publish
 
   echo "Tagging with ${tag}"
   git tag $tag
